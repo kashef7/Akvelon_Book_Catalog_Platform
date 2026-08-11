@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="App_BLL/App_BLL.csproj" />
+  <Project Path="App_DAL/App_DAL.csproj" />
+  <Project Path="App_PL/App_PL.csproj" />
+  <Project Path="App_Tests/App_Tests.csproj" />
+</Solution>
