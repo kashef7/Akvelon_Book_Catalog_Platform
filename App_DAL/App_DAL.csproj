@@ -8,9 +8,6 @@
 
     <ItemGroup>
       <Folder Include="Database\" />
-      <Folder Include="Entities\" />
-      <Folder Include="Repos\Abstraction\" />
-      <Folder Include="Repos\Implementaion\" />
     </ItemGroup>
 
 </Project>
