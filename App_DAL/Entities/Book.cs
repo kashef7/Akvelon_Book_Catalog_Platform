@@ -2,7 +2,7 @@
 
 public class Book
 {
-    public Guid Id { get; init; } = Guid.NewGuid();
+    public Guid Id { get; init; } = Guid.NewGuid(); //When adding the DB check for a better option for Indexing
     public string Title { get; private set; }
     public string Description { get; private set; }
     public string AuthorName { get; private set; }
@@ -12,7 +12,7 @@ public class Book
     public BookStatus Status { get; private set; }
 
     public bool IsDeleted { get; private set; }
-
+    
     public Book(string title, string description, string authorName, DateOnly datePublished, decimal rating ,  BookStatus status)
     {
         Title = title;
