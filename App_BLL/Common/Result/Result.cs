@@ -2,11 +2,11 @@
 
 public class Result <T>
 {
-    public T? Data { get; set; }
-    public bool IsSuccess { get; set; }
-    public int StatusCode { get; set; }
+    public T? Data { get; private set; }
+    public bool IsSuccess { get; private set; }
+    public int StatusCode { get; private set; }
 
-    public string? Message { get; set; }
+    public string? Message { get; private set; }
 
     private Result (T? data, bool isSuccess, int statusCode, string? message)
     {
