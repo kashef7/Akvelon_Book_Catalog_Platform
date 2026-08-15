@@ -8,9 +8,9 @@ public class InMemoryBookRepo : IBookRepo
 {
     private readonly ConcurrentDictionary<Guid, Book> _books = new();
 
-    public Task<List<Book>> GetAllBooksAsync()
+    public Task<IReadOnlyList<Book>> GetAllBooksAsync()
     {
-        var result = _books.Values.Where(b => !b.IsDeleted).ToList();
+        IReadOnlyList<Book> result = _books.Values.Where(b => !b.IsDeleted).ToList();
         return Task.FromResult(result);
     }
 
