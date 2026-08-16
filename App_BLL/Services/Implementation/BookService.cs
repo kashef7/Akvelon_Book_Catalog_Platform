@@ -65,7 +65,7 @@ public class BookService : IBookService
         return Result.Success(204, "Book Updated");
     }
 
-    public async Task<Result> UpdateBookStatusAsync(Guid id, BookStatus status)
+    public async Task<Result> UpdateBookStatusAsync(Guid id, BookStatusDto status)
     {
         var bookToUpdate = await _bookRepo.GetBookByIdAsync(id);
         if (bookToUpdate == null)
@@ -75,7 +75,8 @@ public class BookService : IBookService
         {
             return Result.Failed(404, "Book is Deleted");
         }
-        bookToUpdate.UpdateStatus(status);
+        var bookToUpdateStatus = _mapper.Map<BookStatus>(status);
+        bookToUpdate.UpdateStatus(bookToUpdateStatus);
         return Result.Success(204, "Book Status Updated");
     }
 

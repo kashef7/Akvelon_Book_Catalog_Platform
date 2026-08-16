@@ -1,6 +1,5 @@
 ﻿using App_BLL.Common.Result;
 using App_BLL.Dtos.BooksDtos;
-using App_DAL.Entities;
 
 namespace App_BLL.Services.Abstraction;
 
@@ -15,7 +14,7 @@ public interface IBookService
     //Update Book
     Task<Result> UpdateBookAsync(BookEditDto book, Guid editedBookId);
     //Update Status
-    Task<Result> UpdateBookStatusAsync(Guid id, BookStatus status);
+    Task<Result> UpdateBookStatusAsync(Guid id, BookStatusDto status);
     //Update Rating
     Task<Result> UpdateBookRatingAsync(Guid id, decimal rating);
     //Delete Book

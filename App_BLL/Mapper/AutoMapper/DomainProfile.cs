@@ -11,5 +11,6 @@ public class DomainProfile : Profile
         CreateMap<Book,BookCreateDto>().ReverseMap();
         CreateMap<Book,BookEditDto>().ReverseMap();
         CreateMap<Book,BookGetDto>().ReverseMap();
+        CreateMap<BookStatus,BookStatusDto>().ReverseMap();
     }    
 }
