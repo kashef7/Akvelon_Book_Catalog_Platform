@@ -68,13 +68,6 @@ public class BooksController : ControllerBase
         return result.IsSuccess ? NoContent() : HandleFailure(result);
     }
     
-    private IActionResult HandleFailure(Result result)
-    {
-        return result.StatusCode switch
-        {
-            404 => NotFound(result.Message),
-            409 => Conflict(result.Message),
-            _ => BadRequest(result.Message)
-        };
-    }
+    private IActionResult HandleFailure(Result result) =>
+        Problem(detail: result.Message, statusCode: result.StatusCode);
 }

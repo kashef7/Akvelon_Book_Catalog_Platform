@@ -1,4 +1,6 @@
 using App_BLL.Mapper.AutoMapper;
+using App_BLL.Services.Abstraction;
+using App_BLL.Services.Implementation;
 using App_DAL.Repos.Abstraction;
 using App_DAL.Repos.Implementaion;
 using App_PL.Exceptions;
@@ -10,6 +12,7 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
 builder.Services.AddSingleton<IBookRepo, InMemoryBookRepo>();
+builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddAutoMapper(x => x.AddProfile(new DomainProfile()));
 
 builder.Services.AddEndpointsApiExplorer();
