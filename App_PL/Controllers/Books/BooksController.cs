@@ -47,6 +47,7 @@ public class BooksController : ControllerBase
         return result.IsSuccess ? NoContent() : HandleFailure(result);
     }
 
+    //TODO: Fix Status going out of range
     [HttpPatch("status/{id:guid}")]
     public async Task<IActionResult> UpdateStatus(Guid id, BookStatusDto status)
     {
@@ -54,6 +55,7 @@ public class BooksController : ControllerBase
         return result.IsSuccess ? NoContent() : HandleFailure(result);
     }
 
+    //TODO: Make the rating up to two decimal points
     [HttpPatch("rating/{id:guid}")]
     public async Task<IActionResult> UpdateRating(Guid id, BookRatingDto rating)
     {

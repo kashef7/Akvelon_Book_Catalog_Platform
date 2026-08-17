@@ -4,6 +4,7 @@ using App_BLL.Services.Abstraction;
 using App_DAL.Entities;
 using App_DAL.Repos.Abstraction;
 using AutoMapper;
+using Microsoft.Extensions.Logging;
 
 namespace App_BLL.Services.Implementation;
 
@@ -11,10 +12,12 @@ public class BookService : IBookService
 {
     private readonly IBookRepo _bookRepo;
     private readonly IMapper _mapper;
-    public BookService(IBookRepo repo, IMapper mapper)
+    private readonly ILogger<BookService> _logger;
+    public BookService(IBookRepo repo, IMapper mapper,  ILogger<BookService> logger)
     {
         _bookRepo = repo;
         _mapper = mapper;
+        _logger = logger;
         
     }
     public async Task<Result<IReadOnlyList<BookGetDto>>> GetAllBooksAsync()
@@ -39,10 +42,12 @@ public class BookService : IBookService
         var today = DateOnly.FromDateTime(DateTime.Now);
         if (book.DatePublished > today)
         {
+            _logger.LogWarning("Adding Book Failed : Date Published {DatePublished} Can't be in the future", book.DatePublished);
             return Result<Guid>.Failed(400, "Book Date Published Can't be in the future");
         }
         var newBook = _mapper.Map<Book>(book);
         await _bookRepo.AddBookAsync(newBook);
+        _logger.LogInformation("Book {BookId} Added Successfully", newBook.Id);
         return Result<Guid>.Success(newBook.Id);
     }
 
@@ -51,17 +56,21 @@ public class BookService : IBookService
         var bookToUpdate = await _bookRepo.GetBookByIdAsync(editedBookId);
         if (bookToUpdate == null)
         {
+            _logger.LogWarning("Update Book Failed : Book {BookId} Not Found", editedBookId);
             return Result.Failed(404, "Book Not Found");
         }else if (bookToUpdate.IsDeleted)
         {
+            _logger.LogWarning("Update Book Failed : Book {BookId} Is Deleted", editedBookId);
             return Result.Failed(404, "Book is Deleted");
         }
         var today = DateOnly.FromDateTime(DateTime.Now);
         if (book.DatePublished > today)
         {
+            _logger.LogWarning("Update Book Failed : Date Published {DatePublished} Can't be in the future", book.DatePublished);
             return Result.Failed(400, "Book Date Published Can't be in the future");
         }
         bookToUpdate.UpdateBook(book.Title,book.Description,book.AuthorName,book.DatePublished,book.Rating,book.Status);
+        _logger.LogInformation("Book {BookId} Updated", editedBookId);
         return Result.Success(204, "Book Updated");
     }
 
@@ -70,14 +79,17 @@ public class BookService : IBookService
         var bookToUpdate = await _bookRepo.GetBookByIdAsync(id);
         if (bookToUpdate == null)
         {
+            _logger.LogWarning("Update Book Status Failed : Book {BookId} Not Found", id);
             return Result.Failed(404, "Book Not Found");
         }else if (bookToUpdate.IsDeleted)
         {
+            _logger.LogWarning("Update Book Status Failed : Book {BookId} Is Deleted", id);
             return Result.Failed(404, "Book is Deleted");
         }
 
         var bookToUpdateStatus = status.Status;
         bookToUpdate.UpdateStatus(bookToUpdateStatus);
+        _logger.LogInformation("Book {BookId} Status Updated to {Status}", id, bookToUpdateStatus);
         return Result.Success(204, "Book Status Updated");
     }
 
@@ -86,12 +98,15 @@ public class BookService : IBookService
         var bookToUpdate = await _bookRepo.GetBookByIdAsync(id);
         if (bookToUpdate == null)
         {
+            _logger.LogWarning("Update Book Rating Failed : Book {BookId} Not Found", id);
             return Result.Failed(404, "Book Not Found");
         }else if (bookToUpdate.IsDeleted)
         {
+            _logger.LogWarning("Update Book Rating Failed : Book {BookId} Is Deleted", id);
             return Result.Failed(404, "Book is Deleted");
         }
         bookToUpdate.UpdateRating(rating);
+        _logger.LogInformation("Book {BookId} Rating Updated to {Rating}", id , rating);
         return Result.Success(204, "Book Ratings Updated");
     }
 
@@ -100,12 +115,15 @@ public class BookService : IBookService
         var bookToDelete = await _bookRepo.GetBookByIdAsync(id);
         if (bookToDelete == null)
         {
+            _logger.LogWarning("Deleting Book Failed : Book {BookId} Not Found", id);
             return Result.Failed(404, "Book Not Found");
         }else if (bookToDelete.IsDeleted)
         {
+            _logger.LogWarning("Deleting Book Failed : Book {BookId} is already Deleted", id);
             return Result.Failed(404, "Book is already Deleted");
         } 
         await _bookRepo.DeleteBookAsync(bookToDelete.Id);
+        _logger.LogInformation("Book {BookId} Deleted", id);
         return Result.Success(204, "Book Deleted");
     }
 }
