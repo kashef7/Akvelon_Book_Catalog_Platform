@@ -75,7 +75,8 @@ public class BookService : IBookService
         {
             return Result.Failed(404, "Book is Deleted");
         }
-        var bookToUpdateStatus = _mapper.Map<BookStatus>(status);
+
+        var bookToUpdateStatus = status.Status;
         bookToUpdate.UpdateStatus(bookToUpdateStatus);
         return Result.Success(204, "Book Status Updated");
     }
