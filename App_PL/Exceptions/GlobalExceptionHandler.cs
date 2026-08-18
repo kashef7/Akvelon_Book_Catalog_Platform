@@ -18,7 +18,7 @@ public class GlobalExceptionHandler : IExceptionHandler
             AppException appEx => (appEx.StatusCode, appEx.Message),
             _ => (StatusCodes.Status500InternalServerError, "Unhandled Exception")
         };
-        _logger.LogError(exception, title);
+        _logger.LogError(exception, "Unhandled exception occurred: {Title}", title);
         httpContext.Response.StatusCode = status;
         await httpContext.Response.WriteAsJsonAsync(new ProblemDetails()
         {
