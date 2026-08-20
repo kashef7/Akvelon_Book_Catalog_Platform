@@ -5,8 +5,6 @@ using App_DAL.Repos.Abstraction.Books;
 using App_DAL.Repos.Implementaion.Books;
 using App_PL.Exceptions;
 
-//TODO: Fix entity leak in the Project where PL can See the DAL entities
-
 
 var builder = WebApplication.CreateBuilder(args);
 

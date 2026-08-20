@@ -1,6 +1,7 @@
 ﻿using App_BLL.Common.Result;
 using App_BLL.Dtos.BooksDtos;
 using App_BLL.Services.Abstraction.Books;
+using App_PL.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace App_PL.Controllers;
@@ -71,5 +72,5 @@ public class BooksController : ControllerBase
     }
     
     private IActionResult HandleFailure(Result result) =>
-        Problem(detail: result.Message, statusCode: result.StatusCode);
+        Problem(detail: result.Message, statusCode: result.Error!.Value.ToHttpStatusCode());
 }
