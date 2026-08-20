@@ -1,10 +1,12 @@
-﻿// App_PL/Controllers/BooksController.cs
-using App_BLL.Common.Result;
+﻿using App_BLL.Common.Result;
 using App_BLL.Dtos.BooksDtos;
-using App_BLL.Services.Abstraction;
+using App_BLL.Services.Abstraction.Books;
 using Microsoft.AspNetCore.Mvc;
 
 namespace App_PL.Controllers;
+
+// TODO: add [EnumDataType(typeof(BookStatus))] validation to BookStatusDto
+// TODO: enforce/round rating to 2 decimal places before persisting
 
 [ApiController]
 [Route("api/[controller]")]
@@ -46,16 +48,14 @@ public class BooksController : ControllerBase
         var result = await _bookService.UpdateBookAsync(dto, id);
         return result.IsSuccess ? NoContent() : HandleFailure(result);
     }
-
-    //TODO: Fix Status going out of range
+    
     [HttpPatch("status/{id:guid}")]
     public async Task<IActionResult> UpdateStatus(Guid id, BookStatusDto status)
     {
         var result = await _bookService.UpdateBookStatusAsync(id, status);
         return result.IsSuccess ? NoContent() : HandleFailure(result);
     }
-
-    //TODO: Make the rating up to two decimal points
+    
     [HttpPatch("rating/{id:guid}")]
     public async Task<IActionResult> UpdateRating(Guid id, BookRatingDto rating)
     {

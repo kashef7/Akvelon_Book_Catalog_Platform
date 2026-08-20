@@ -6,12 +6,4 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
-    <ItemGroup>
-      <Folder Include="Database\" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\App_Common\App_Common.csproj" />
-    </ItemGroup>
-
 </Project>

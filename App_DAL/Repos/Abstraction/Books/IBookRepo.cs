@@ -1,6 +1,6 @@
-﻿using App_DAL.Entities;
+﻿using App_DAL.Entities.Books;
 
-namespace App_DAL.Repos.Abstraction;
+namespace App_DAL.Repos.Abstraction.Books;
 
 public interface IBookRepo
 {

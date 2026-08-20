@@ -1,5 +1,5 @@
 ﻿using App_BLL.Dtos.BooksDtos;
-using App_DAL.Entities;
+using App_DAL.Entities.Books;
 using AutoMapper;
 
 namespace App_BLL.Mapper.AutoMapper;

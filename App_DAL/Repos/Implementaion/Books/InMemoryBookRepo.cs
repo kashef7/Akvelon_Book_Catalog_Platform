@@ -1,8 +1,8 @@
 ﻿using System.Collections.Concurrent;
-using App_DAL.Entities;
-using App_DAL.Repos.Abstraction;
+using App_DAL.Entities.Books;
+using App_DAL.Repos.Abstraction.Books;
 
-namespace App_DAL.Repos.Implementaion;
+namespace App_DAL.Repos.Implementaion.Books;
 
 public class InMemoryBookRepo : IBookRepo
 {

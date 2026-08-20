@@ -1,4 +1,6 @@
-﻿namespace App_DAL.Entities;
+﻿using App_Common.Common.Book;
+
+namespace App_DAL.Entities.Books;
 
 public class Book
 {

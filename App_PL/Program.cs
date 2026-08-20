@@ -1,9 +1,12 @@
 using App_BLL.Mapper.AutoMapper;
-using App_BLL.Services.Abstraction;
-using App_BLL.Services.Implementation;
-using App_DAL.Repos.Abstraction;
-using App_DAL.Repos.Implementaion;
+using App_BLL.Services.Abstraction.Books;
+using App_BLL.Services.Implementation.Books;
+using App_DAL.Repos.Abstraction.Books;
+using App_DAL.Repos.Implementaion.Books;
 using App_PL.Exceptions;
+
+//TODO: Fix entity leak in the Project where PL can See the DAL entities
+
 
 var builder = WebApplication.CreateBuilder(args);
 

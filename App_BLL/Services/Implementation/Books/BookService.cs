@@ -1,12 +1,17 @@
 ﻿using App_BLL.Common.Result;
 using App_BLL.Dtos.BooksDtos;
-using App_BLL.Services.Abstraction;
-using App_DAL.Entities;
-using App_DAL.Repos.Abstraction;
+using App_BLL.Services.Abstraction.Books;
+using App_DAL.Entities.Books;
+using App_DAL.Repos.Abstraction.Books;
 using AutoMapper;
 using Microsoft.Extensions.Logging;
 
-namespace App_BLL.Services.Implementation;
+namespace App_BLL.Services.Implementation.Books;
+
+// TODO: Clean Code - extract repeated "not found / IsDeleted" guard into a shared helper method
+// TODO: Clean Code - extract repeated "publish date can't be in future" check into a shared helper method
+// TODO: Clean Code - replace magic status code ints (404, 400, 204, 200) with named constants
+// TODO: Clean Code - fix "}else if" spacing/formatting to match rest of file
 
 public class BookService : IBookService
 {

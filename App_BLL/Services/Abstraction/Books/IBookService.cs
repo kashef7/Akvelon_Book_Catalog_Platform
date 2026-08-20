@@ -1,7 +1,7 @@
 ﻿using App_BLL.Common.Result;
 using App_BLL.Dtos.BooksDtos;
 
-namespace App_BLL.Services.Abstraction;
+namespace App_BLL.Services.Abstraction.Books;
 
 public interface IBookService
 {

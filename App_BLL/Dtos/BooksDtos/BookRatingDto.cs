@@ -1,5 +1,4 @@
-﻿// App_BLL/Dtos/BooksDtos/BookRatingUpdateDto.cs
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace App_BLL.Dtos.BooksDtos;
 

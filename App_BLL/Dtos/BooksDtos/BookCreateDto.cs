@@ -1,9 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using App_DAL.Entities;
+using App_Common.Common.Book;
 
 namespace App_BLL.Dtos.BooksDtos;
 
-public class BookCreateDto
+
+public class BookCreateDto 
 {
     [Required]
     [MaxLength(100)]

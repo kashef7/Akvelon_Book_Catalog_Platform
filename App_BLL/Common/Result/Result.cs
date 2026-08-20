@@ -1,5 +1,7 @@
 ﻿namespace App_BLL.Common.Result;
 
+// TODO: Clean Code - Result exposes raw HTTP status codes to the BLL; consider an error-kind enum instead
+
 public class Result
 {
     public bool IsSuccess { get; protected set; }
