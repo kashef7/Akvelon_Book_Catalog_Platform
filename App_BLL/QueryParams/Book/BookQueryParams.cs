@@ -1,4 +1,7 @@
-﻿namespace App_BLL.QueryParams.Book;
+﻿using System.ComponentModel.DataAnnotations;
+using App_Common.Common.Book;
+
+namespace App_BLL.QueryParams.Book;
 
 public class BookQueryParams
 {
@@ -9,6 +12,16 @@ public class BookQueryParams
     public int PageSize
     {
         get => _pageSize;
-        set => _pageSize = value > MaxPageSize ? MaxPageSize : value;
+        init => _pageSize = value > MaxPageSize ? MaxPageSize : value;
     }
+    
+    [MaxLength(100)]
+    public string? Title { get; init;}
+    
+
+    [EnumDataType(typeof(BookStatus))]
+    public BookStatus? Status { get; init;}
+    
+    [Range(0,5)]
+    public decimal? Rating { get; init;}
 }

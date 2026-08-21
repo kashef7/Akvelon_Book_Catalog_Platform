@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using App_Common.Common.Book;
 using App_DAL.Entities.Books;
+using App_DAL.Helper;
 using App_DAL.Repos.Abstraction.Books;
 
 namespace App_DAL.Repos.Implementaion.Books;
@@ -11,7 +12,7 @@ public class InMemoryBookRepo : IBookRepo
 
     public Task<(IReadOnlyList<Book>,int)> GetAllBooksAsync(BookQuery bookQuery)
     {
-        var query = _books.Values.Where(b => !b.IsDeleted);
+        var query = _books.Values.AsQueryable().Where(b => !b.IsDeleted).ApplyQueryFilters(bookQuery);
         
         int totalCount = query.Count();
         IReadOnlyList<Book> result = query.Skip((bookQuery.PageNumber - 1) * bookQuery.PageSize).Take(bookQuery.PageSize).ToList();

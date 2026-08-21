@@ -28,11 +28,7 @@ public class BookService : IBookService
     public async Task<Result<PagedResult<BookGetDto>>> GetAllBooksAsync(BookQueryParams  query)
     {
         
-        var bookQuery = new BookQuery
-        {
-            PageNumber = query.PageNumber,
-            PageSize = query.PageSize,
-        };
+        var bookQuery = _mapper.Map<BookQuery>(query);
 
         var (books, totalCount) = await _bookRepo.GetAllBooksAsync(bookQuery);
         var dtos = _mapper.Map<IReadOnlyList<BookGetDto>>(books);

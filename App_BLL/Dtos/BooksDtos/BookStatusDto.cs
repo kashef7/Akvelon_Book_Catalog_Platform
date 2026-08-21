@@ -7,5 +7,6 @@ namespace App_BLL.Dtos.BooksDtos;
 public class BookStatusDto
 {
     [Required]  
+    [EnumDataType(typeof(BookStatus))]
     public BookStatus Status{ get; set; }
 }

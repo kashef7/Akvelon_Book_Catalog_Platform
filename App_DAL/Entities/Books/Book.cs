@@ -26,7 +26,7 @@ public class Book
         Description = description;
         AuthorName = authorName;
         DatePublished = datePublished;
-        Rating = rating;
+        Rating = Math.Round(rating, 2, MidpointRounding.AwayFromZero);
         IsDeleted = false;
         Status = status;
         CreatedAt = DateTime.UtcNow;
@@ -38,7 +38,7 @@ public class Book
         Description = description;
         AuthorName = authorName;
         DatePublished = datePublished;
-        Rating = rating;
+        Rating = Math.Round(rating, 2, MidpointRounding.AwayFromZero);
         Status = status;
         UpdatedAt = DateTime.UtcNow;
     }
@@ -51,7 +51,7 @@ public class Book
     
     public void UpdateRating(decimal rating)
     {
-        Rating = rating;
+        Rating = Math.Round(rating, 2, MidpointRounding.AwayFromZero);
         UpdatedAt = DateTime.UtcNow;
     }
 

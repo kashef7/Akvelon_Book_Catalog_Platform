@@ -21,5 +21,6 @@ public class BookCreateDto
     [Range(0, 5)]
     public decimal Rating { get;  set; }
     [Required]
+    [EnumDataType(typeof(BookStatus))]
     public BookStatus Status { get;  set; }
 }
