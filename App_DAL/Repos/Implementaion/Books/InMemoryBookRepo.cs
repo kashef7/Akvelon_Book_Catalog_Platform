@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using App_Common.Common.Book;
 using App_DAL.Entities.Books;
 using App_DAL.Repos.Abstraction.Books;
 
@@ -8,10 +9,13 @@ public class InMemoryBookRepo : IBookRepo
 {
     private readonly ConcurrentDictionary<Guid, Book> _books = new();
 
-    public Task<IReadOnlyList<Book>> GetAllBooksAsync()
+    public Task<(IReadOnlyList<Book>,int)> GetAllBooksAsync(BookQuery bookQuery)
     {
-        IReadOnlyList<Book> result = _books.Values.Where(b => !b.IsDeleted).ToList();
-        return Task.FromResult(result);
+        var query = _books.Values.Where(b => !b.IsDeleted);
+        
+        int totalCount = query.Count();
+        IReadOnlyList<Book> result = query.Skip((bookQuery.PageNumber - 1) * bookQuery.PageSize).Take(bookQuery.PageSize).ToList();
+        return Task.FromResult<(IReadOnlyList<Book>,int)>((result, totalCount));
     }
 
     public Task<Book?> GetBookByIdAsync(Guid id)

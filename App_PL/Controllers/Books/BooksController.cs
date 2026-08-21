@@ -1,5 +1,6 @@
 ﻿using App_BLL.Common.Result;
 using App_BLL.Dtos.BooksDtos;
+using App_BLL.QueryParams.Book;
 using App_BLL.Services.Abstraction.Books;
 using App_PL.Extensions;
 using Microsoft.AspNetCore.Mvc;
@@ -21,9 +22,9 @@ public class BooksController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] BookQueryParams query)
     {
-        var result = await _bookService.GetAllBooksAsync();
+        var result = await _bookService.GetAllBooksAsync(query);
         return result.IsSuccess ? Ok(result.Data) : HandleFailure(result);
     }
 

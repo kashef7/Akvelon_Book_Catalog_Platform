@@ -1,6 +1,9 @@
-﻿using App_BLL.Common.Result;
+﻿using App_BLL.Common.Paging;
+using App_BLL.Common.Result;
 using App_BLL.Dtos.BooksDtos;
+using App_BLL.QueryParams.Book;
 using App_BLL.Services.Abstraction.Books;
+using App_Common.Common.Book;
 using App_DAL.Entities.Books;
 using App_DAL.Repos.Abstraction.Books;
 using AutoMapper;
@@ -22,11 +25,25 @@ public class BookService : IBookService
         _logger = logger;
         
     }
-    public async Task<Result<IReadOnlyList<BookGetDto>>> GetAllBooksAsync()
+    public async Task<Result<PagedResult<BookGetDto>>> GetAllBooksAsync(BookQueryParams  query)
     {
-        var books = await _bookRepo.GetAllBooksAsync();
-        var result = _mapper.Map<IReadOnlyList<BookGetDto>>(books);
-        return Result<IReadOnlyList<BookGetDto>>.Success(result);
+        
+        var bookQuery = new BookQuery
+        {
+            PageNumber = query.PageNumber,
+            PageSize = query.PageSize,
+        };
+
+        var (books, totalCount) = await _bookRepo.GetAllBooksAsync(bookQuery);
+        var dtos = _mapper.Map<IReadOnlyList<BookGetDto>>(books);
+
+        return Result<PagedResult<BookGetDto>>.Success(new PagedResult<BookGetDto>
+        {
+            Items = dtos,
+            TotalCount = totalCount,
+            PageNumber = query.PageNumber,
+            PageSize = query.PageSize
+        });
         
     }
 

@@ -15,6 +15,11 @@ public class Book
 
     public bool IsDeleted { get; private set; }
     
+    public DateTime CreatedAt { get; init; }
+    public DateTime? UpdatedAt { get; private set; }
+    
+    public DateTime? DeletedAt { get; private set; }
+    
     public Book(string title, string description, string authorName, DateOnly datePublished, decimal rating ,  BookStatus status)
     {
         Title = title;
@@ -24,6 +29,7 @@ public class Book
         Rating = rating;
         IsDeleted = false;
         Status = status;
+        CreatedAt = DateTime.Now;
     }
 
     public void UpdateBook(string title, string description, string authorName, DateOnly datePublished, decimal rating,BookStatus status)
@@ -34,20 +40,24 @@ public class Book
         DatePublished = datePublished;
         Rating = rating;
         Status = status;
+        UpdatedAt = DateTime.Now;
     }
 
     public void DeleteBook()
     {
         IsDeleted = true;
+        DeletedAt = DateTime.Now;
     }
     
     public void UpdateRating(decimal rating)
     {
         Rating = rating;
+        UpdatedAt = DateTime.Now;
     }
 
     public void UpdateStatus(BookStatus status)
     {
         Status = status;
+        UpdatedAt = DateTime.Now;
     }
 }
