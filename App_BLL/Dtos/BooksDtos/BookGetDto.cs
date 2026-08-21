@@ -14,5 +14,5 @@ public class BookGetDto
     public decimal Rating { get;  set; }
     public BookStatus Status { get;  set; }
     public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
 }

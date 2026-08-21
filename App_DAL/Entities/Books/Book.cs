@@ -29,7 +29,7 @@ public class Book
         Rating = rating;
         IsDeleted = false;
         Status = status;
-        CreatedAt = DateTime.Now;
+        CreatedAt = DateTime.UtcNow;
     }
 
     public void UpdateBook(string title, string description, string authorName, DateOnly datePublished, decimal rating,BookStatus status)
@@ -40,24 +40,24 @@ public class Book
         DatePublished = datePublished;
         Rating = rating;
         Status = status;
-        UpdatedAt = DateTime.Now;
+        UpdatedAt = DateTime.UtcNow;
     }
 
     public void DeleteBook()
     {
         IsDeleted = true;
-        DeletedAt = DateTime.Now;
+        DeletedAt = DateTime.UtcNow;
     }
     
     public void UpdateRating(decimal rating)
     {
         Rating = rating;
-        UpdatedAt = DateTime.Now;
+        UpdatedAt = DateTime.UtcNow;
     }
 
     public void UpdateStatus(BookStatus status)
     {
         Status = status;
-        UpdatedAt = DateTime.Now;
+        UpdatedAt = DateTime.UtcNow;
     }
 }
