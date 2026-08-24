@@ -1,7 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using App_DAL.Entities;
+using App_Common.Common.Book;
 
 namespace App_BLL.Dtos.BooksDtos;
+
+// TODO: Clean Code - identical to BookCreateDto; reconsider if Edit needs Status/Rating given dedicated PATCH endpoints
 
 public class BookEditDto
 {
@@ -20,5 +22,6 @@ public class BookEditDto
     [Range(0, 5)]
     public decimal Rating { get;  set; }
     [Required]
+    [EnumDataType(typeof(BookStatus))]
     public BookStatus Status { get;  set; }
 }

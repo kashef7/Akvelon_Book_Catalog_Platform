@@ -1,5 +1,7 @@
 ﻿using App_BLL.Dtos.BooksDtos;
-using App_DAL.Entities;
+using App_BLL.QueryParams.Book;
+using App_Common.Common.Book;
+using App_DAL.Entities.Books;
 using AutoMapper;
 
 namespace App_BLL.Mapper.AutoMapper;
@@ -11,5 +13,6 @@ public class DomainProfile : Profile
         CreateMap<Book,BookCreateDto>().ReverseMap();
         CreateMap<Book,BookEditDto>().ReverseMap();
         CreateMap<Book,BookGetDto>().ReverseMap();
+        CreateMap<BookQueryParams,BookQuery>().ReverseMap();
     }    
 }

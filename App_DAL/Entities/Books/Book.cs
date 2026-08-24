@@ -1,4 +1,6 @@
-﻿namespace App_DAL.Entities;
+﻿using App_Common.Common.Book;
+
+namespace App_DAL.Entities.Books;
 
 public class Book
 {
@@ -13,15 +15,21 @@ public class Book
 
     public bool IsDeleted { get; private set; }
     
+    public DateTime CreatedAt { get; init; }
+    public DateTime? UpdatedAt { get; private set; }
+    
+    public DateTime? DeletedAt { get; private set; }
+    
     public Book(string title, string description, string authorName, DateOnly datePublished, decimal rating ,  BookStatus status)
     {
         Title = title;
         Description = description;
         AuthorName = authorName;
         DatePublished = datePublished;
-        Rating = rating;
+        Rating = Math.Round(rating, 2, MidpointRounding.AwayFromZero);
         IsDeleted = false;
         Status = status;
+        CreatedAt = DateTime.UtcNow;
     }
 
     public void UpdateBook(string title, string description, string authorName, DateOnly datePublished, decimal rating,BookStatus status)
@@ -30,22 +38,26 @@ public class Book
         Description = description;
         AuthorName = authorName;
         DatePublished = datePublished;
-        Rating = rating;
+        Rating = Math.Round(rating, 2, MidpointRounding.AwayFromZero);
         Status = status;
+        UpdatedAt = DateTime.UtcNow;
     }
 
     public void DeleteBook()
     {
         IsDeleted = true;
+        DeletedAt = DateTime.UtcNow;
     }
     
     public void UpdateRating(decimal rating)
     {
-        Rating = rating;
+        Rating = Math.Round(rating, 2, MidpointRounding.AwayFromZero);
+        UpdatedAt = DateTime.UtcNow;
     }
 
     public void UpdateStatus(BookStatus status)
     {
         Status = status;
+        UpdatedAt = DateTime.UtcNow;
     }
 }

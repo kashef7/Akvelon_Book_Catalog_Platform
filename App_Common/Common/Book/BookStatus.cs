@@ -1,4 +1,4 @@
-﻿namespace App_DAL.Entities;
+﻿namespace App_Common.Common.Book;
 
 public enum BookStatus
 {
