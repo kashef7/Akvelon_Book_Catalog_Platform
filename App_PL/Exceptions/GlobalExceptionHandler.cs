@@ -13,10 +13,10 @@ public class GlobalExceptionHandler : IExceptionHandler
     }
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
-        var (status, title) = exception switch
+        var (status, title,detail) = exception switch
         {
-            AppException appEx => (appEx.StatusCode, appEx.Message),
-            _ => (StatusCodes.Status500InternalServerError, "Unhandled Exception")
+            AppException appEx => (appEx.StatusCode, appEx.Message,appEx.Message),
+            _ => (StatusCodes.Status500InternalServerError, "Internal Server Error","An unexpected error occurred. Please try again later.")
         };
         _logger.LogError(exception, "Unhandled exception occurred: {Title}", title);
         httpContext.Response.StatusCode = status;
@@ -24,7 +24,7 @@ public class GlobalExceptionHandler : IExceptionHandler
         {
             Status = status,
             Title = title,
-            Detail = exception.Message,
+            Detail = detail,
         }, cancellationToken);
         return true;
     }

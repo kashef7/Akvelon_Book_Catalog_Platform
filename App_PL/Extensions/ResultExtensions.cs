@@ -10,7 +10,7 @@ public static class ResultExtensions
         {
             ErrorType.NotFound => StatusCodes.Status404NotFound,
             ErrorType.BadRequest => StatusCodes.Status400BadRequest,
-            _ => StatusCodes.Status400BadRequest
+            _ => throw new ArgumentOutOfRangeException(nameof(errorType), errorType, $"Unmapped {nameof(ErrorType)}")
         };
     }
 }
