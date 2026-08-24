@@ -7,8 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App_PL.Controllers;
 
-// TODO: add [EnumDataType(typeof(BookStatus))] validation to BookStatusDto
-// TODO: enforce/round rating to 2 decimal places before persisting
 
 [ApiController]
 [Route("api/[controller]")]
