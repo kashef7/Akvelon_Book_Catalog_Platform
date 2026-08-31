@@ -5,6 +5,7 @@ using App_BLL.QueryParams.User;
 using App_BLL.Services.Abstraction.Users;
 using App_Common.Common.User;
 using App_DAL.Entities.Users;
+using App_DAL.Repos.Abstraction.Loans;
 using App_DAL.Repos.Abstraction.Users;
 using AutoMapper;
 using Microsoft.Extensions.Logging;
@@ -14,12 +15,14 @@ namespace App_BLL.Services.Implementation.Users;
 public class UserService : IUserService
 {
     private readonly IUserRepo _userRepo;
+    private readonly ILoanRepo _loanRepo;
     private readonly IMapper _mapper;
     private readonly ILogger<UserService> _logger;
 
-    public UserService(IUserRepo userRepo, IMapper mapper, ILogger<UserService> logger)
+    public UserService(IUserRepo userRepo, ILoanRepo loanRepo, IMapper mapper, ILogger<UserService> logger)
     {
         _userRepo = userRepo;
+        _loanRepo = loanRepo;
         _mapper = mapper;
         _logger = logger;
     }
@@ -53,14 +56,13 @@ public class UserService : IUserService
 
     public async Task<Result<Guid>> AddUserAsync(UserCreateDto user)
     {
-        var newUser = _mapper.Map<User>(user);
+        var newUser = new User(user.Name);
         await _userRepo.AddUserAsync(newUser);
         return Result<Guid>.Success(newUser.Id);
     }
 
     public async Task<Result> UpdateUserAsync(UserEditDto user, Guid editedUserId)
     {
-        var newUserData = _mapper.Map<User>(user);
         var editedUser = await _userRepo.GetUserByIdAsync(editedUserId);
         if (editedUser == null)
         {
@@ -89,6 +91,12 @@ public class UserService : IUserService
         {
             _logger.LogWarning("Deleting User Failed, User {UserId} is Deleted", id);
             return Result.Failed(ErrorType.NotFound, "User Deleted");
+        }
+
+        if (await _loanRepo.HasActiveLoanByUserAsync(id))
+        {
+            _logger.LogWarning("Deleting User Failed, User {UserId} has active Loans", id);
+            return Result.Failed(ErrorType.Conflict, "User Has Active Loan");
         }
         deletedUser.DeleteUser();
         await _userRepo.SaveChangesAsync();

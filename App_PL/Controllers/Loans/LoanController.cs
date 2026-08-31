@@ -1,4 +1,4 @@
-﻿using App_BLL.Common.Result;
+using App_BLL.Common.Result;
 using App_BLL.Dtos.LoansDtos;
 using App_BLL.QueryParams.Loan;
 using App_BLL.Services.Abstraction.Loans;
@@ -11,7 +11,7 @@ namespace App_PL.Controllers.Loans;
 [Route("api/[controller]")]
 public class LoanController : ControllerBase
 {
-    ILoanService _loanService;
+    private readonly ILoanService _loanService;
 
     public LoanController(ILoanService loanService)
     {
@@ -22,14 +22,14 @@ public class LoanController : ControllerBase
     public async Task<IActionResult> GetLoansAsync([FromQuery] LoanQueryParams query)
     {
         var result = await _loanService.GetLoansAsync(query);
-        return result.IsSuccess ? Ok(result) : HandleFailure(result);
+        return result.IsSuccess ? Ok(result.Data) : HandleFailure(result);
     }
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetLoanByIdAsync(Guid id)
     {
         var result = await _loanService.GetLoanByIdAsync(id);
-        return result.IsSuccess ? Ok(result) : HandleFailure(result);
+        return result.IsSuccess ? Ok(result.Data) : HandleFailure(result);
     }
 
     [HttpPost]
@@ -43,7 +43,7 @@ public class LoanController : ControllerBase
     public async Task<IActionResult> ReturnLoanAsync(Guid id)
     {
         var result = await _loanService.ReturnBookAsync(id);
-        return result.IsSuccess ? Ok(result) : HandleFailure(result);
+        return result.IsSuccess ? NoContent() : HandleFailure(result);
     }
     
     private IActionResult HandleFailure(Result result) => 

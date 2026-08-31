@@ -22,17 +22,13 @@ public class DomainProfile : Profile
 {
     public DomainProfile()
     {
-        CreateMap<Book,BookGetDto>().ForMember(d=> d.AuthorName, opt => opt.MapFrom(s => s.Author.Name)).ReverseMap();
+        CreateMap<Book,BookGetDto>().ForMember(d=> d.AuthorName, opt => opt.MapFrom(s => s.Author.Name));
         CreateMap<BookQueryParams,BookQuery>().ReverseMap();
         
         
-        CreateMap<AuthorCreateDto, Author>();
-        CreateMap<AuthorEditDto, Author>();
         CreateMap<Author,AuthorGetDto>().ReverseMap();
         CreateMap<AuthorQueryParams,AuthorQuery>().ReverseMap();
 
-        CreateMap<UserCreateDto, User>();
-        CreateMap<UserEditDto, User>();
         CreateMap<User, UserGetDto>().ReverseMap();
         CreateMap<UserQueryParams, UserQuery>().ReverseMap();
         

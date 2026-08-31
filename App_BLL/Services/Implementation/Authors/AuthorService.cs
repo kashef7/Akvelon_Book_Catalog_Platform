@@ -56,14 +56,13 @@ public class AuthorService : IAuthorService
 
     public async Task<Result<Guid>> AddAuthorAsync(AuthorCreateDto Author)
     {
-        var newAuthor = _mapper.Map<Author>(Author);
+        var newAuthor = new Author(Author.Name);
         await _authorRepo.AddAuthorAsync(newAuthor);
         return Result<Guid>.Success(newAuthor.Id);
     }
 
     public async Task<Result> UpdateAuthorAsync(AuthorEditDto Author, Guid editedAuthorId)
     {
-        var newDataAuthor =  _mapper.Map<Author>(Author);
         var editedAuthor = await _authorRepo.GetAuthorByIdAsync(editedAuthorId);
         if (editedAuthor == null)
         {

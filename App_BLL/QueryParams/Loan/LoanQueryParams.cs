@@ -1,4 +1,4 @@
-﻿namespace App_BLL.QueryParams.Loan;
+namespace App_BLL.QueryParams.Loan;
 
 public class LoanQueryParams
 {
@@ -11,4 +11,10 @@ public class LoanQueryParams
         get => _pageSize;
         init => _pageSize = value > MaxPageSize ? MaxPageSize : value;
     }
+
+    public Guid? BookId { get; init; }
+    public Guid? UserId { get; init; }
+    public bool? IsReturned { get; init; }
+    public DateTime? DueBefore { get; init; }
+    public DateTime? DueAfter { get; init; }
 }

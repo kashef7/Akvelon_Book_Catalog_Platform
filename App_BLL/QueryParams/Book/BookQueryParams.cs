@@ -17,9 +17,17 @@ public class BookQueryParams
     
     [MaxLength(100)]
     public string? Title { get; init;}
+
+    [MaxLength(13)]
+    public string? Isbn { get; init; }
+
+    public Guid? AuthorId { get; init; }
     
     [Range(0,5)]
-    public decimal? Rating { get; init;}
+    public decimal? MinRating { get; init;}
+
+    [Range(0,5)]
+    public decimal? MaxRating { get; init;}
     
     [MaxLength(64)]
     public string? AuthorName { get; init;}

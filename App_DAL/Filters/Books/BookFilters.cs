@@ -13,10 +13,24 @@ public static class BookFilters
             books = books.Where(b => b.Title.Contains(bookQuery.Title));
         }
 
-
-        if (bookQuery.Rating != null)
+        if (!string.IsNullOrWhiteSpace(bookQuery.Isbn))
         {
-            books = books.Where(b => b.Rating == bookQuery.Rating);
+            books = books.Where(b => b.Isbn == bookQuery.Isbn);
+        }
+
+        if (bookQuery.AuthorId != null)
+        {
+            books = books.Where(b => b.AuthorId == bookQuery.AuthorId);
+        }
+
+        if (bookQuery.MinRating != null)
+        {
+            books = books.Where(b => b.Rating >= bookQuery.MinRating);
+        }
+
+        if (bookQuery.MaxRating != null)
+        {
+            books = books.Where(b => b.Rating <= bookQuery.MaxRating);
         }
 
         if (bookQuery.StartDatePublished != null)

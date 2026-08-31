@@ -2,7 +2,7 @@
 
 public class LoanGetDto
 {
-    public Guid LoanId { get; set; }
+    public Guid Id { get; set; }
     public DateTime LoanedAt { get; set; }
     public DateTime DueAt { get; set; }
     public DateTime? ReturnedAt { get; set; }

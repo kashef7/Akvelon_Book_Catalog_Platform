@@ -1,4 +1,4 @@
-﻿using App_Common.Common.Loan;
+using App_Common.Common.Loan;
 using App_DAL.Database;
 using App_DAL.Entities.Loans;
 using App_DAL.Filters.Loans;
@@ -26,7 +26,7 @@ public class LoanRepo : ILoanRepo
         return (result, totalCount);
     }
 
-    public async Task<Loan> GetLoanByIdAsync(Guid loanId)
+    public async Task<Loan?> GetLoanByIdAsync(Guid loanId)
     {
         var loan = await _dbContext.Loans
             .Include(l => l.Book)
@@ -44,6 +44,11 @@ public class LoanRepo : ILoanRepo
     public async Task<bool> HasActiveLoanAsync(Guid bookId)
     {
         return await _dbContext.Loans.AnyAsync(l => l.BookId == bookId && l.ReturnedAt == null);
+    }
+
+    public async Task<bool> HasActiveLoanByUserAsync(Guid userId)
+    {
+        return await _dbContext.Loans.AnyAsync(l => l.UserId == userId && l.ReturnedAt == null);
     }
 
     public async Task SaveChangesAsync()

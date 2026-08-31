@@ -6,7 +6,10 @@ public class BookQuery
     public int PageSize { get; init;}
     
     public string? Title { get; init;}
-    public decimal? Rating { get; init;}
+    public string? Isbn { get; init; }
+    public Guid? AuthorId { get; init; }
+    public decimal? MinRating { get; init; }
+    public decimal? MaxRating { get; init; }
     
     public string? AuthorName { get; init;}
     

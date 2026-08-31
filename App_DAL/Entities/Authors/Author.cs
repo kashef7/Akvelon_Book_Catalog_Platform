@@ -1,4 +1,4 @@
-﻿namespace App_DAL.Entities.Authors;
+namespace App_DAL.Entities.Authors;
 
 public class Author
 {
@@ -15,9 +15,9 @@ public class Author
     public Author()
     {}
     
-    public Author(Author author)
+    public Author(string name)
     {
-        Name = author.Name;
+        Name = name;
         CreatedAt = DateTime.UtcNow;
     }
 
