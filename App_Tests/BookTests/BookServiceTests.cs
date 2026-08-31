@@ -1,4 +1,4 @@
-﻿using App_BLL.Dtos.BooksDtos;
+using App_BLL.Dtos.BooksDtos;
 using App_BLL.QueryParams.Book;
 using App_BLL.Services.Abstraction.Books;
 using App_BLL.Services.Implementation.Books;
@@ -34,18 +34,18 @@ public class BookServiceTests
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         IReadOnlyList<Book> books = new List<Book>()
         {
-            new Book("Book1", "The 1st book", "Author1", today, 5, BookStatus.NotStarted),
-            new Book("Book2", "The 2nd book", "Author2", today, 5, BookStatus.NotStarted),
-            new Book("Book3", "The 3rd book", "Author3", today, 5, BookStatus.NotStarted),
+            new Book("Book1", "The 1st book", "Author1", today, 5),
+            new Book("Book2", "The 2nd book", "Author2", today, 5),
+            new Book("Book3", "The 3rd book", "Author3", today, 5),
         };
         int totalCount = books.Count;
 
         var mappedQuery = new BookQuery();
         IReadOnlyList<BookGetDto> bookDto = new List<BookGetDto>()
         {
-            new BookGetDto { Id = Guid.NewGuid(), Title = "Book1", Description = "The 1st book", AuthorName = "Author1", DatePublished = today, Rating = 5, Status = BookStatus.NotStarted },
-            new BookGetDto { Id = Guid.NewGuid(), Title = "Book2", Description = "The 2nd book", AuthorName = "Author2", DatePublished = today, Rating = 5, Status = BookStatus.NotStarted },
-            new BookGetDto { Id = Guid.NewGuid(), Title = "Book3", Description = "The 3rd book", AuthorName = "Author3", DatePublished = today, Rating = 5, Status = BookStatus.NotStarted },
+            new BookGetDto { Id = Guid.NewGuid(), Title = "Book1", Description = "The 1st book", AuthorName = "Author1", DatePublished = today, Rating = 5 },
+            new BookGetDto { Id = Guid.NewGuid(), Title = "Book2", Description = "The 2nd book", AuthorName = "Author2", DatePublished = today, Rating = 5 },
+            new BookGetDto { Id = Guid.NewGuid(), Title = "Book3", Description = "The 3rd book", AuthorName = "Author3", DatePublished = today, Rating = 5 },
         };
 
         _bookRepoMock.Setup(repo => repo.GetAllBooksAsync(It.IsAny<BookQuery>())).ReturnsAsync((books, totalCount));
@@ -74,20 +74,19 @@ public class BookServiceTests
         var bookQuery = new BookQueryParams
         {
             Rating = 5,
-            Status = BookStatus.NotStarted,
             Title = "Book1"
         };
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         IReadOnlyList<Book> books = new List<Book>()
         {
-            new Book("Book1", "The 1st book", "Author1", today, 5, BookStatus.NotStarted),
+            new Book("Book1", "The 1st book", "Author1", today, 5),
         };
         int totalCount = books.Count;
 
-        var mappedQuery = new BookQuery { Title = "Book1", Status = BookStatus.NotStarted, Rating = 5 };
+        var mappedQuery = new BookQuery { Title = "Book1", Rating = 5 };
         IReadOnlyList<BookGetDto> bookDto = new List<BookGetDto>()
         {
-            new BookGetDto { Id = Guid.NewGuid(), Title = "Book1", Description = "The 1st book", AuthorName = "Author1", DatePublished = today, Rating = 5, Status = BookStatus.NotStarted },
+            new BookGetDto { Id = Guid.NewGuid(), Title = "Book1", Description = "The 1st book", AuthorName = "Author1", DatePublished = today, Rating = 5 },
         };
 
         _bookRepoMock.Setup(repo => repo.GetAllBooksAsync(It.IsAny<BookQuery>())).ReturnsAsync((books, totalCount));
@@ -111,8 +110,8 @@ public class BookServiceTests
     {
         //Arrange
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var book = new Book("Book1", "The 1st book", "Author1", today, 5, BookStatus.NotStarted);
-        var bookDto = new BookGetDto { Id = book.Id, Title = "Book1", Description = "The 1st book", AuthorName = "Author1", DatePublished = today, Rating = 5, Status = BookStatus.NotStarted };
+        var book = new Book("Book1", "The 1st book", "Author1", today, 5);
+        var bookDto = new BookGetDto { Id = book.Id, Title = "Book1", Description = "The 1st book", AuthorName = "Author1", DatePublished = today, Rating = 5 };
 
         _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(book.Id)).ReturnsAsync(book);
         _mapperMock.Setup(m => m.Map<BookGetDto>(book)).Returns(bookDto);
@@ -150,9 +149,9 @@ public class BookServiceTests
         var createDto = new BookCreateDto
         {
             Title = "Book1", Description = "The 1st book", AuthorName = "Author1",
-            DatePublished = today, Rating = 5, Status = BookStatus.NotStarted
+            DatePublished = today, Rating = 5
         };
-        var mappedBook = new Book(createDto.Title, createDto.Description, createDto.AuthorName, createDto.DatePublished, createDto.Rating, createDto.Status);
+        var mappedBook = new Book(createDto.Title, createDto.Description, createDto.AuthorName, createDto.DatePublished, createDto.Rating);
 
         _mapperMock.Setup(m => m.Map<Book>(createDto)).Returns(mappedBook);
         _bookRepoMock.Setup(repo => repo.AddBookAsync(mappedBook)).Returns(Task.CompletedTask);
@@ -178,7 +177,7 @@ public class BookServiceTests
         var createDto = new BookCreateDto
         {
             Title = "Book1", Description = "The 1st book", AuthorName = "Author1",
-            DatePublished = futureDate, Rating = 5, Status = BookStatus.NotStarted
+            DatePublished = futureDate, Rating = 5
         };
 
         //Act
@@ -196,11 +195,11 @@ public class BookServiceTests
     {
         //Arrange
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var existingBook = new Book("OldTitle", "OldDesc", "OldAuthor", today, 3, BookStatus.NotStarted);
+        var existingBook = new Book("OldTitle", "OldDesc", "OldAuthor", today, 3);
         var editDto = new BookEditDto
         {
             Title = "NewTitle", Description = "NewDesc", AuthorName = "NewAuthor",
-            DatePublished = today, Rating = 4, Status = BookStatus.Started
+            DatePublished = today, Rating = 4
         };
         _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(existingBook.Id)).ReturnsAsync(existingBook);
 
@@ -210,7 +209,6 @@ public class BookServiceTests
         //Assert
         Assert.True(result.IsSuccess);
         Assert.Equal("NewTitle", existingBook.Title);
-        Assert.Equal(BookStatus.Started, existingBook.Status);
     }
 
     //test UpdateBookAsync returns Not Found if book not found
@@ -222,7 +220,7 @@ public class BookServiceTests
         var editDto = new BookEditDto
         {
             Title = "NewTitle", Description = "NewDesc", AuthorName = "NewAuthor",
-            DatePublished = DateOnly.FromDateTime(DateTime.UtcNow), Rating = 4, Status = BookStatus.Started
+            DatePublished = DateOnly.FromDateTime(DateTime.UtcNow), Rating = 4
         };
         _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(bookId)).ReturnsAsync((Book?)null);
 
@@ -240,12 +238,12 @@ public class BookServiceTests
     {
         //Arrange
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var deletedBook = new Book("Title", "Desc", "Author", today, 3, BookStatus.NotStarted);
+        var deletedBook = new Book("Title", "Desc", "Author", today, 3);
         deletedBook.DeleteBook();
         var editDto = new BookEditDto
         {
             Title = "NewTitle", Description = "NewDesc", AuthorName = "NewAuthor",
-            DatePublished = today, Rating = 4, Status = BookStatus.Started
+            DatePublished = today, Rating = 4
         };
         _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(deletedBook.Id)).ReturnsAsync(deletedBook);
 
@@ -266,12 +264,12 @@ public class BookServiceTests
     {
         //Arrange
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var existingBook = new Book("Title", "Desc", "Author", today, 3, BookStatus.NotStarted);
+        var existingBook = new Book("Title", "Desc", "Author", today, 3);
         var futureDate = DateOnly.FromDateTime(DateTime.Now.AddDays(daysAhead));
         var editDto = new BookEditDto
         {
             Title = "NewTitle", Description = "NewDesc", AuthorName = "NewAuthor",
-            DatePublished = futureDate, Rating = 4, Status = BookStatus.Started
+            DatePublished = futureDate, Rating = 4
         };
         _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(existingBook.Id)).ReturnsAsync(existingBook);
 
@@ -284,67 +282,13 @@ public class BookServiceTests
         Assert.Equal("Title", existingBook.Title); // proves the book was NOT mutated
     }
 
-    //test UpdateBookStatusAsync runs correctly with correct book data
-    [Fact]
-    public async Task UpdateBookStatusAsync_ValidStatus_ReturnsSuccess()
-    {
-        //Arrange
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var existingBook = new Book("Title", "Desc", "Author", today, 3, BookStatus.NotStarted);
-        var statusDto = new BookStatusDto { Status = BookStatus.Finished };
-        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(existingBook.Id)).ReturnsAsync(existingBook);
-
-        //Act
-        var result = await _bookService.UpdateBookStatusAsync(existingBook.Id, statusDto);
-
-        //Assert
-        Assert.True(result.IsSuccess);
-        Assert.Equal(BookStatus.Finished, existingBook.Status);
-    }
-
-    //test UpdateBookStatusAsync returns Not Found if book not found
-    [Fact]
-    public async Task UpdateBookStatusAsync_BookNotFound_ReturnsNotFound()
-    {
-        //Arrange
-        var bookId = Guid.NewGuid();
-        var statusDto = new BookStatusDto { Status = BookStatus.Finished };
-        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(bookId)).ReturnsAsync((Book?)null);
-
-        //Act
-        var result = await _bookService.UpdateBookStatusAsync(bookId, statusDto);
-
-        //Assert
-        Assert.False(result.IsSuccess);
-        Assert.Equal(ErrorType.NotFound, result.Error);
-    }
-
-    //test UpdateBookStatusAsync returns Not Found if book is deleted
-    [Fact]
-    public async Task UpdateBookStatusAsync_BookIsDeleted_ReturnsNotFound()
-    {
-        //Arrange
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var deletedBook = new Book("Title", "Desc", "Author", today, 3, BookStatus.NotStarted);
-        deletedBook.DeleteBook();
-        var statusDto = new BookStatusDto { Status = BookStatus.Finished };
-        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(deletedBook.Id)).ReturnsAsync(deletedBook);
-
-        //Act
-        var result = await _bookService.UpdateBookStatusAsync(deletedBook.Id, statusDto);
-
-        //Assert
-        Assert.False(result.IsSuccess);
-        Assert.Equal(ErrorType.NotFound, result.Error);
-    }
-
     //test UpdateBookRatingAsync runs correctly with correct book data
     [Fact]
     public async Task UpdateBookRatingAsync_ValidRating_ReturnsSuccess()
     {
         //Arrange
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var existingBook = new Book("Title", "Desc", "Author", today, 3, BookStatus.NotStarted);
+        var existingBook = new Book("Title", "Desc", "Author", today, 3);
         _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(existingBook.Id)).ReturnsAsync(existingBook);
 
         //Act
@@ -377,7 +321,7 @@ public class BookServiceTests
     {
         //Arrange
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var deletedBook = new Book("Title", "Desc", "Author", today, 3, BookStatus.NotStarted);
+        var deletedBook = new Book("Title", "Desc", "Author", today, 3);
         deletedBook.DeleteBook();
         _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(deletedBook.Id)).ReturnsAsync(deletedBook);
 
@@ -395,7 +339,7 @@ public class BookServiceTests
     {
         //Arrange
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var existingBook = new Book("Title", "Desc", "Author", today, 3, BookStatus.NotStarted);
+        var existingBook = new Book("Title", "Desc", "Author", today, 3);
         _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(existingBook.Id)).ReturnsAsync(existingBook);
         _bookRepoMock.Setup(repo => repo.DeleteBookAsync(existingBook.Id)).Returns(Task.CompletedTask);
 
@@ -430,7 +374,7 @@ public class BookServiceTests
     {
         //Arrange
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var deletedBook = new Book("Title", "Desc", "Author", today, 3, BookStatus.NotStarted);
+        var deletedBook = new Book("Title", "Desc", "Author", today, 3);
         deletedBook.DeleteBook();
         _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(deletedBook.Id)).ReturnsAsync(deletedBook);
 

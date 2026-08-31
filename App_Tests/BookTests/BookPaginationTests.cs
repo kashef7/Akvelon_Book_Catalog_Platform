@@ -2,7 +2,7 @@ using App_BLL.Common.Paging;
 using App_BLL.QueryParams.Book;
 using App_Common.Common.Book;
 using App_DAL.Entities.Books;
-using App_DAL.Repos.Implementaion.Books;
+using App_DAL.Repos.Implementation.Books;
 
 namespace App_Tests.BookTests;
 
@@ -15,9 +15,8 @@ public class BookPaginationTests
         var repo = new InMemoryBookRepo();
         for (int i = 1; i <= count; i++)
         {
-            var status = i % 2 == 0 ? BookStatus.Finished : BookStatus.Started;
             var rating = i % 2 == 0 ? 4.5m : 3.0m;
-            await repo.AddBookAsync(new Book($"Book {i:D2}", $"Description {i}", $"Author {i}", _today, rating, status));
+            await repo.AddBookAsync(new Book($"Book {i:D2}", $"Description {i}", $"Author {i}", _today, rating));
         }
         return repo;
     }
@@ -98,9 +97,9 @@ public class BookPaginationTests
     {
         //Arrange
         var repo = new InMemoryBookRepo();
-        var activeBook1 = new Book("Active 1", "Desc", "Author", _today, 4.0m, BookStatus.Started);
-        var activeBook2 = new Book("Active 2", "Desc", "Author", _today, 4.0m, BookStatus.Started);
-        var deletedBook = new Book("Deleted", "Desc", "Author", _today, 4.0m, BookStatus.Started);
+        var activeBook1 = new Book("Active 1", "Desc", "Author", _today, 4.0m);
+        var activeBook2 = new Book("Active 2", "Desc", "Author", _today, 4.0m);
+        var deletedBook = new Book("Deleted", "Desc", "Author", _today, 4.0m);
 
         await repo.AddBookAsync(activeBook1);
         await repo.AddBookAsync(activeBook2);
@@ -124,10 +123,9 @@ public class BookPaginationTests
     {
         //Arrange
         var repo = await CreatePopulatedRepoAsync(20);
-        // Odd numbers are BookStatus.Started (10 items), even numbers are BookStatus.Finished (10 items)
         var query = new BookQuery
         {
-            Status = BookStatus.Finished,
+            Rating = 4.5m,
             PageNumber = 1,
             PageSize = 4
         };
@@ -138,7 +136,6 @@ public class BookPaginationTests
         //Assert
         Assert.Equal(10, totalCount);
         Assert.Equal(4, items.Count);
-        Assert.All(items, b => Assert.Equal(BookStatus.Finished, b.Status));
     }
 
     //test BookQueryParams clamps PageSize to MaxPageSize of 50 when exceeded

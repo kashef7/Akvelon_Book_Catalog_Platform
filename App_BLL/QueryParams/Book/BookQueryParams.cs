@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using App_Common.Common.Book;
 
 namespace App_BLL.QueryParams.Book;
@@ -18,10 +18,12 @@ public class BookQueryParams
     [MaxLength(100)]
     public string? Title { get; init;}
     
-
-    [EnumDataType(typeof(BookStatus))]
-    public BookStatus? Status { get; init;}
-    
     [Range(0,5)]
     public decimal? Rating { get; init;}
+    
+    [MaxLength(64)]
+    public string? AuthorName { get; init;}
+    
+    public DateOnly? StartDatePublished { get; init;}
+    public DateOnly? EndDatePublished { get; init;}
 }

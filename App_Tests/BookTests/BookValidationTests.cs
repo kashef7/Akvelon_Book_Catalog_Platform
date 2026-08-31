@@ -1,8 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using App_BLL.Dtos.BooksDtos;
 using App_BLL.QueryParams.Book;
-using App_Common.Common.Book;
-
 namespace App_Tests.BookTests;
 
 public class BookValidationTests
@@ -25,8 +23,7 @@ public class BookValidationTests
             Description = "A handbook of agile software craftsmanship",
             AuthorName = "Robert C. Martin",
             DatePublished = _today,
-            Rating = 4.5m,
-            Status = BookStatus.NotStarted
+            Rating = 4.5m
         };
     }
 
@@ -38,8 +35,7 @@ public class BookValidationTests
             Description = "A handbook of agile software craftsmanship",
             AuthorName = "Robert C. Martin",
             DatePublished = _today,
-            Rating = 4.5m,
-            Status = BookStatus.NotStarted
+            Rating = 4.5m
         };
     }
 
@@ -71,8 +67,7 @@ public class BookValidationTests
             Description = description!,
             AuthorName = authorName!,
             DatePublished = _today,
-            Rating = 4.0m,
-            Status = BookStatus.NotStarted
+            Rating = 4.0m
         };
 
         //Act
@@ -96,8 +91,7 @@ public class BookValidationTests
             Description = new string('b', descLen),
             AuthorName = new string('c', authorLen),
             DatePublished = _today,
-            Rating = 4.0m,
-            Status = BookStatus.NotStarted
+            Rating = 4.0m
         };
 
         //Act
@@ -123,21 +117,6 @@ public class BookValidationTests
 
         //Assert
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(BookCreateDto.Rating)));
-    }
-
-    //test BookCreateDto fails when status is not a valid enum value
-    [Fact]
-    public void BookCreateDto_InvalidEnumStatus_FailsValidation()
-    {
-        //Arrange
-        var dto = CreateValidBookCreateDto();
-        dto.Status = (BookStatus)999;
-
-        //Act
-        var results = ValidateModel(dto);
-
-        //Assert
-        Assert.Contains(results, r => r.MemberNames.Contains(nameof(BookCreateDto.Status)));
     }
 
     //test BookEditDto valid model passes validation
@@ -168,8 +147,7 @@ public class BookValidationTests
             Description = description!,
             AuthorName = authorName!,
             DatePublished = _today,
-            Rating = 4.0m,
-            Status = BookStatus.NotStarted
+            Rating = 4.0m
         };
 
         //Act
@@ -194,52 +172,6 @@ public class BookValidationTests
 
         //Assert
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(BookEditDto.Rating)));
-    }
-
-    //test BookEditDto fails when status is invalid enum
-    [Fact]
-    public void BookEditDto_InvalidEnumStatus_FailsValidation()
-    {
-        //Arrange
-        var dto = CreateValidBookEditDto();
-        dto.Status = (BookStatus)999;
-
-        //Act
-        var results = ValidateModel(dto);
-
-        //Assert
-        Assert.Contains(results, r => r.MemberNames.Contains(nameof(BookEditDto.Status)));
-    }
-
-    //test BookStatusDto passes validation for valid enum status
-    [Theory]
-    [InlineData(BookStatus.NotStarted)]
-    [InlineData(BookStatus.Started)]
-    [InlineData(BookStatus.Finished)]
-    public void BookStatusDto_ValidStatus_PassesValidation(BookStatus status)
-    {
-        //Arrange
-        var dto = new BookStatusDto { Status = status };
-
-        //Act
-        var results = ValidateModel(dto);
-
-        //Assert
-        Assert.Empty(results);
-    }
-
-    //test BookStatusDto fails validation for invalid enum status
-    [Fact]
-    public void BookStatusDto_InvalidStatus_FailsValidation()
-    {
-        //Arrange
-        var dto = new BookStatusDto { Status = (BookStatus)999 };
-
-        //Act
-        var results = ValidateModel(dto);
-
-        //Assert
-        Assert.Contains(results, r => r.MemberNames.Contains(nameof(BookStatusDto.Status)));
     }
 
     //test BookRatingDto passes validation for ratings within 0 to 5
@@ -283,7 +215,6 @@ public class BookValidationTests
         var query = new BookQueryParams
         {
             Title = "Clean Code",
-            Status = BookStatus.Started,
             Rating = 4.5m
         };
 
@@ -325,19 +256,5 @@ public class BookValidationTests
 
         //Assert
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(BookQueryParams.Rating)));
-    }
-
-    //test BookQueryParams fails validation when status is invalid enum
-    [Fact]
-    public void BookQueryParams_InvalidEnumStatus_FailsValidation()
-    {
-        //Arrange
-        var query = new BookQueryParams { Status = (BookStatus)999 };
-
-        //Act
-        var results = ValidateModel(query);
-
-        //Assert
-        Assert.Contains(results, r => r.MemberNames.Contains(nameof(BookQueryParams.Status)));
     }
 }

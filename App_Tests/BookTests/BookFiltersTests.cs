@@ -12,10 +12,10 @@ public class BookFiltersTests
     {
         return new List<Book>
         {
-            new Book("Clean Code", "A handbook of agile software craftsmanship", "Robert C. Martin", _today, 4.8m, BookStatus.Finished),
-            new Book("Design Patterns", "Elements of Reusable Object-Oriented Software", "Erich Gamma", _today, 4.5m, BookStatus.Started),
-            new Book("Refactoring", "Improving the Design of Existing Code", "Martin Fowler", _today, 4.8m, BookStatus.NotStarted),
-            new Book("The Pragmatic Programmer", "From Journeyman to Master", "Andrew Hunt", _today, 4.0m, BookStatus.Finished)
+            new Book("Clean Code", "A handbook of agile software craftsmanship", "Robert C. Martin", _today, 4.8m),
+            new Book("Design Patterns", "Elements of Reusable Object-Oriented Software", "Erich Gamma", _today, 4.5m),
+            new Book("Refactoring", "Improving the Design of Existing Code", "Martin Fowler", _today, 4.8m),
+            new Book("The Pragmatic Programmer", "From Journeyman to Master", "Andrew Hunt", _today, 4.0m)
         };
     }
 
@@ -83,25 +83,6 @@ public class BookFiltersTests
         Assert.Empty(result);
     }
 
-    //test ApplyQueryFilters returns only matching books when status filter is passed
-    [Theory]
-    [InlineData(BookStatus.Finished, 2)]
-    [InlineData(BookStatus.Started, 1)]
-    [InlineData(BookStatus.NotStarted, 1)]
-    public void ApplyQueryFilters_StatusFilterPassed_ReturnsMatchingBooksOnly(BookStatus status, int expectedCount)
-    {
-        //Arrange
-        var books = CreateSampleBooks().AsQueryable();
-        var query = new BookQuery { Status = status };
-
-        //Act
-        var result = books.ApplyQueryFilters(query).ToList();
-
-        //Assert
-        Assert.Equal(expectedCount, result.Count);
-        Assert.All(result, b => Assert.Equal(status, b.Status));
-    }
-
     //test ApplyQueryFilters returns only matching books when rating filter is passed
     [Fact]
     public void ApplyQueryFilters_RatingFilterPassed_ReturnsMatchingBooksOnly()
@@ -127,7 +108,6 @@ public class BookFiltersTests
         var query = new BookQuery
         {
             Title = "Clean Code",
-            Status = BookStatus.Finished,
             Rating = 4.8m
         };
 
@@ -137,7 +117,6 @@ public class BookFiltersTests
         //Assert
         Assert.Single(result);
         Assert.Equal("Clean Code", result[0].Title);
-        Assert.Equal(BookStatus.Finished, result[0].Status);
         Assert.Equal(4.8m, result[0].Rating);
     }
 
@@ -150,8 +129,7 @@ public class BookFiltersTests
         var query = new BookQuery
         {
             Title = "Clean Code",
-            Status = BookStatus.Started,
-            Rating = 4.8m
+            Rating = 3.0m
         };
 
         //Act
