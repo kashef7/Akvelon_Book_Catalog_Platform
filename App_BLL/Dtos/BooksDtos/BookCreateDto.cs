@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
+using System.Runtime.InteropServices;
 using App_Common.Common.Book;
 
 namespace App_BLL.Dtos.BooksDtos;
@@ -10,17 +11,19 @@ public class BookCreateDto
     [MaxLength(100)]
     public string Title { get; set; }
     [Required]
-    [MaxLength(300)]
+    [MaxLength(1000)]
     public string Description { get; set; }
+    
     [Required]
-    [MaxLength(70)]
-    public string AuthorName { get;  set; }
+    [Length(13,13)]
+    public string Isbn { get; set; }
+    
+    [Required]
+    public Guid AuthorId { get; set; }
+    
     [Required]
     public DateOnly DatePublished { get;  set;}
     [Required]
     [Range(0, 5)]
     public decimal Rating { get;  set; }
-    [Required]
-    [EnumDataType(typeof(BookStatus))]
-    public BookStatus Status { get;  set; }
 }

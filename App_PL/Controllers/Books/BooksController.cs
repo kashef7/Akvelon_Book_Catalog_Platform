@@ -1,4 +1,4 @@
-﻿using App_BLL.Common.Result;
+using App_BLL.Common.Result;
 using App_BLL.Dtos.BooksDtos;
 using App_BLL.QueryParams.Book;
 using App_BLL.Services.Abstraction.Books;
@@ -32,6 +32,13 @@ public class BooksController : ControllerBase
         var result = await _bookService.GetBookAsync(id);
         return result.IsSuccess ? Ok(result.Data) : HandleFailure(result);
     }
+    
+    [HttpGet("{isbn}")]
+    public async Task<IActionResult> GetByIsbn(string isbn)
+    {
+        var result = await _bookService.GetBookByIsbnAsync(isbn);
+        return result.IsSuccess ? Ok(result.Data) : HandleFailure(result);
+    }
 
     [HttpPost]
     public async Task<IActionResult> Create(BookCreateDto dto)
@@ -46,13 +53,6 @@ public class BooksController : ControllerBase
     public async Task<IActionResult> Update(Guid id, BookEditDto dto)
     {
         var result = await _bookService.UpdateBookAsync(dto, id);
-        return result.IsSuccess ? NoContent() : HandleFailure(result);
-    }
-    
-    [HttpPatch("status/{id:guid}")]
-    public async Task<IActionResult> UpdateStatus(Guid id, BookStatusDto status)
-    {
-        var result = await _bookService.UpdateBookStatusAsync(id, status);
         return result.IsSuccess ? NoContent() : HandleFailure(result);
     }
     

@@ -1,18 +1,18 @@
-﻿using App_Common.Common.Book;
+using App_DAL.Entities.Authors;
 
 namespace App_DAL.Entities.Books;
 
 public class Book
 {
-    public Guid Id { get; init; } = Guid.NewGuid(); //When adding the DB check for a better option for Indexing
+    public Guid Id { get; init; } = Guid.CreateVersion7(); 
+    public string Isbn { get; init; }
     public string Title { get; private set; }
     public string Description { get; private set; }
-    public string AuthorName { get; private set; }
     public DateOnly DatePublished { get; private set; }
     public decimal Rating { get; private set; }
-    
-    public BookStatus Status { get; private set; }
 
+    public Guid AuthorId { get; init; }
+    public Author Author { get; init; }
     public bool IsDeleted { get; private set; }
     
     public DateTime CreatedAt { get; init; }
@@ -20,26 +20,28 @@ public class Book
     
     public DateTime? DeletedAt { get; private set; }
     
-    public Book(string title, string description, string authorName, DateOnly datePublished, decimal rating ,  BookStatus status)
+    
+    private Book() {}
+    
+    public Book(string isbn,string title, string description, Author author, DateOnly datePublished, decimal rating)
     {
+        Isbn = isbn;
         Title = title;
         Description = description;
-        AuthorName = authorName;
+        AuthorId = author.Id;
+        Author = author;
         DatePublished = datePublished;
         Rating = Math.Round(rating, 2, MidpointRounding.AwayFromZero);
         IsDeleted = false;
-        Status = status;
         CreatedAt = DateTime.UtcNow;
     }
 
-    public void UpdateBook(string title, string description, string authorName, DateOnly datePublished, decimal rating,BookStatus status)
+    public void UpdateBook(string title, string description, DateOnly datePublished, decimal rating)
     {
         Title = title;
         Description = description;
-        AuthorName = authorName;
         DatePublished = datePublished;
         Rating = Math.Round(rating, 2, MidpointRounding.AwayFromZero);
-        Status = status;
         UpdatedAt = DateTime.UtcNow;
     }
 
@@ -52,12 +54,6 @@ public class Book
     public void UpdateRating(decimal rating)
     {
         Rating = Math.Round(rating, 2, MidpointRounding.AwayFromZero);
-        UpdatedAt = DateTime.UtcNow;
-    }
-
-    public void UpdateStatus(BookStatus status)
-    {
-        Status = status;
         UpdatedAt = DateTime.UtcNow;
     }
 }
