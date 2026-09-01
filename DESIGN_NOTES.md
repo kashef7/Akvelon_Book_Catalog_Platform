@@ -372,3 +372,596 @@ This is the first thing on my list for week 3, before the database work, because
 - Title filtering is exact-match only. A `Contains()` version is easy to write but I want to understand what it costs against a real database before I commit to it.
 
 - `BookEditDto` and `BookCreateDto` are still field-for-field identical. I flagged this with a `TODO` in week 1 and haven't resolved whether that's actually a problem worth fixing or just a coincidence of this domain — I want to decide that deliberately, not just collapse them because they look similar today.
+# Week 3 — EF Core, Relational Modeling, & Containerization
+
+## What changed this week
+
+Week 3 moved the application from the week 1/2 in-memory design to a real relational persistence layer using **Entity Framework Core with Microsoft SQL Server**.
+
+This was not treated as a rewrite of the application. The existing layered architecture and repository/service abstractions were kept in place, and the concrete in-memory repositories were replaced by EF Core implementations through dependency injection.
+
+At the same time, the domain model was expanded from a single `Book` entity into a relational model involving **Books, Authors, Users, and Loans**, with explicit foreign keys, referential constraints, indexes, migrations, and database-level protections.
+
+---
+
+## 1. Entity Refactoring & Relational Domain Modeling
+
+### `Book.Author` became a real relationship
+
+In week 1, `Book` stored the author's name directly as text. In week 3 I changed that design so that `Book` now stores an `AuthorId` foreign key and references an `Author` entity.
+
+The relationship is modeled as **one Author → many Books** from the database perspective. EF Core configures `Book.AuthorId` as the foreign key and uses `DeleteBehavior.Restrict`, so deleting an author cannot silently delete its books. The database migration reflects the same restriction through the generated foreign-key constraint.
+
+I deliberately kept the relationship unidirectional from the entity-navigation perspective for now: `Book` knows its `Author`, while `Author` does not currently expose a `Books` collection. The important architectural decision was establishing the relational ownership through `AuthorId`, not duplicating author information inside every book.
+
+### Why I chose an `Author` entity
+
+Making authors first-class entities avoids storing duplicated author names across books and gives the system a stable identity for an author.
+
+This also makes future author-level operations possible without redesigning the book schema again.
+
+The refactoring had a real impact because `Book` was already used throughout the repository, service, mapping, and test layers. Rather than changing the architecture, I adapted those layers around the new domain relationship.
+
+---
+
+## 2. Loan Modeling & Borrowing History
+
+I introduced `Loan` as an **associative/domain entity** between `User` and `Book`, rather than simply placing a `UserId` and an `IsBorrowed` flag on `Book`.
+
+A loan stores:
+
+* `BookId`
+* `UserId`
+* `LoanedAt`
+* `DueAt`
+* `ReturnedAt`
+
+This design intentionally preserves borrowing history. A book can therefore participate in multiple loan records over its lifetime, while only one loan may be active at a time. Returning a book does not delete the loan record; it sets `ReturnedAt`, preserving the historical event.
+
+The database relationships from `Loan` to both `Book` and `User` also use `DeleteBehavior.Restrict`, preventing deletion of a parent record from silently destroying borrowing history.
+
+---
+
+## 3. Soft Delete & Data Lifecycle
+
+I continued the soft-delete decision from week 1 rather than switching to physical deletion once SQL Server was introduced.
+
+`Book`, `Author`, and `User` contain `IsDeleted`, `DeletedAt`, and timestamp fields, allowing records to be logically removed while remaining in the database for historical purposes.
+
+The important distinction in week 3 is that soft delete is now backed by a persistent database rather than an in-memory flag.
+
+For authors, the application also prevents deletion while an active, non-deleted book still references the author. That rule is checked in the service through `HasActiveBookByAuthorAsync`, while the database FK restriction provides a second layer of protection against destructive cascading behavior.
+
+---
+
+## 4. Switching from In-Memory Storage to EF Core + SQL Server
+
+The main persistence decision this week was replacing `InMemoryBookRepo` with an EF Core-backed `BookRepo`.
+
+The service layer did not need to become database-aware because `BookService` still depends on `IBookRepo`. The concrete implementation is selected through dependency injection in `Program.cs`:
+
+`IBookRepo → BookRepo`
+
+The same pattern is used for authors, users, and loans. This validated the repository abstraction from week 2: the abstraction was useful because changing the persistence mechanism did not require rewriting the controller/service architecture.
+
+EF Core is configured to use SQL Server through:
+
+`AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));`
+
+and the DAL references the EF Core and SQL Server provider packages directly.
+
+---
+
+## 5. Keeping EF Core Configuration Separate from the Entities
+
+I chose to keep database-specific configuration out of the entity classes and place it into dedicated `IEntityTypeConfiguration<T>` classes.
+
+For example, `BookConfiguration` defines:
+
+* primary key configuration
+* the `Author` relationship
+* `DeleteBehavior.Restrict`
+* required fields and length limits
+* decimal precision for ratings
+* indexes
+* unique ISBN constraint
+
+`LoanConfiguration` similarly defines its relationships, required fields, indexes, and active-loan constraint.
+
+`AppDbContext` then uses:
+
+`modelBuilder.ApplyConfigurationsFromAssembly(...)`
+
+so the context automatically discovers those configuration classes.
+
+I preferred this approach because the entities remain focused on domain state and behavior, while persistence-specific decisions such as indexes, SQL precision, and delete behavior stay in the DAL configuration layer.
+
+---
+
+## 6. Database-Level Concurrency Protection
+
+The most important concurrency decision in week 3 was the handling of simultaneous attempts to loan the same book.
+
+Application-level checking alone is not sufficient:
+
+`HasActiveLoanAsync(bookId)`
+
+can return `false` for two requests that execute at nearly the same time.
+
+Therefore, I added a **unique filtered SQL Server index** on `Loan.BookId` where `ReturnedAt IS NULL`.
+
+This means the database itself guarantees that there can be at most one active loan for a particular book. Historical returned loans are still allowed because their `ReturnedAt` value is no longer null.
+
+The service still performs the application-level availability check because it provides a clean and fast validation path for normal requests. The database constraint is the final protection against the race condition.
+
+If two requests pass the application check concurrently, one insert succeeds and the other receives a `DbUpdateException`, which the service converts into a domain-level `Conflict` result instead of exposing a database error directly to the client.
+
+This gave me an important design lesson: **application validation improves user-facing behavior, but database constraints must enforce invariants that can be violated by concurrency.**
+
+---
+
+## 7. Transactions & Unit of Work
+
+I intentionally did not introduce a large explicit transaction abstraction.
+
+The current repository operations use EF Core's `SaveChangesAsync()` for each atomic persistence operation.
+
+For example, adding a book, creating a loan, or returning a book performs its required changes and then saves them through the DbContext.
+
+The reasoning is that most current operations are single aggregate/database writes. Adding explicit transaction scopes around every operation would add complexity without providing additional value.
+
+The loan concurrency case is different: rather than trying to solve it with a complex transaction flow, I chose a database uniqueness constraint because the actual invariant is simpler and more reliably expressed as a constraint.
+
+---
+
+## 8. Query Design & Performance Decisions
+
+The move to SQL Server made the performance considerations from week 2 concrete.
+
+`BookRepo.GetAllBooksAsync()` now builds an `IQueryable`, applies filters before pagination, calculates the total count, and then applies `OrderBy`, `Skip`, and `Take`. It also uses `AsNoTracking()` for read-only catalog queries.
+
+I kept eager loading of the author with:
+
+`Include(b => b.Author)`
+
+because the API needs author information together with book information. Since the endpoint is paginated, the amount of materialized data is bounded by the requested page size rather than loading the complete table into memory.
+
+I also added indexes for fields that participate in common lookups/filtering, including:
+
+* `AuthorId`
+* `DatePublished`
+* `Rating`
+* `Isbn`
+
+and made ISBN unique because it represents a unique book identifier in the catalog.
+
+This is a deliberate trade-off: indexes improve read performance but introduce additional write/storage cost, so I only added them to fields with a concrete query or integrity requirement.
+
+---
+
+## 9. Inspecting Generated SQL
+
+Moving from LINQ over an in-memory collection to EF Core introduced a new concern: I needed to verify what SQL EF Core was actually generating.
+
+For that reason, `BookRepo.GetAllBooksAsync()` uses `ToQueryString()` on the final paginated query during development. This allowed me to inspect the generated SQL while debugging instead of assuming that the LINQ expression translated into the query I intended.
+
+This fits the lesson from week 2: once persistence becomes a real database, abstraction should hide implementation details from the business layer, but the developer still needs visibility into those details while diagnosing performance or correctness problems.
+
+---
+
+## 10. EF Core Migrations
+
+The schema is managed through EF Core migrations rather than manually creating tables.
+
+The week 3 migration creates:
+
+* `Authors`
+* `Users`
+* `Books`
+* `Loans`
+
+and establishes their primary keys, foreign keys, indexes, uniqueness constraints, and default values.
+
+I reviewed the generated migration SQL rather than treating `Add-Migration` as a black box. This gave me a way to verify that important design decisions — especially `DeleteBehavior.Restrict` and the filtered unique active-loan index — were actually represented in the database schema.
+
+In development, the application also executes:
+
+`db.Database.Migrate()`
+
+during startup so the configured database is brought up to the latest migration automatically.
+
+---
+
+## 11. Containerization
+
+Week 3 also moved the application toward reproducible deployment using Docker.
+
+I created a **multi-stage Dockerfile**:
+
+### Build stage
+
+Uses the .NET SDK image to restore dependencies and publish the application.
+
+### Runtime stage
+
+Uses the lighter ASP.NET runtime image and copies only the published output into the final container.
+
+The final container exposes port `8080` and runs `App_PL.dll`.
+
+I chose the multi-stage approach so the final image does not need the full SDK and build-time tooling.
+
+---
+
+## 12. Docker Compose & Service Separation
+
+The application and database are orchestrated as separate containers through `compose.yaml`.
+
+There are currently two services:
+
+* `api` — the ASP.NET Core Web API
+* `db` — Microsoft SQL Server 2022
+
+The API connects to SQL Server through the Docker service name `db`, rather than assuming the database is running on the host machine.
+
+The SQL Server container also uses a named Docker volume:
+
+`sql_data`
+
+so database files survive container recreation instead of existing only inside the container filesystem.
+
+The API is configured to wait for the database health check before starting, reducing startup failures caused by the API connecting before SQL Server is ready.
+
+---
+
+## 13. Configuration & Secrets
+
+I deliberately kept database credentials outside the source code.
+
+`compose.yaml` reads the SQL Server password and database name from environment variables, and the API receives its connection string through the environment-based configuration key:
+
+`ConnectionStrings__DefaultConnection`
+
+An `example.env` file is committed as a template rather than storing the actual secret values in the repository.
+
+This keeps environment-specific configuration separate from application code and makes the same container configuration easier to reuse across development and deployment environments.
+
+---
+
+## 14. Database Choice
+
+I selected **Microsoft SQL Server** instead of continuing with an embedded or in-memory provider because the application is already a .NET system and the relational requirements now justify a full SQL database.
+
+SQL Server also fits naturally with EF Core, provides mature indexing and constraint support, and gives me a realistic production-oriented relational environment rather than a simplified test-only storage model.
+
+The repository explicitly uses the SQL Server EF Core provider, so the application's persistence behavior now reflects the database technology it is intended to run against.
+
+---
+
+## 15. Testing & Reliability
+
+Week 3 expanded the testing concern from purely business logic to persistence-related behavior and domain rules.
+
+The important principle remained the same as week 2: I am testing the decisions and behavior owned by my application rather than trying to test EF Core itself.
+
+The new persistence design introduced additional cases worth validating, especially:
+
+* relational author/book behavior
+* loan creation and return behavior
+* duplicate active-loan attempts
+* conflict handling when the database rejects a concurrent loan
+* soft-deleted records
+* repository queries with filters and pagination
+
+The code specifically handles `DbUpdateException` in the loan workflow and translates a database-level uniqueness conflict into `ErrorType.Conflict`, keeping infrastructure details from leaking through the API contract.
+
+---
+
+## What I learned / what I would improve
+
+The biggest architectural lesson this week was that moving from an in-memory repository to a real database changes the meaning of several earlier decisions.
+
+Pagination, filtering, concurrency, deletion, and query composition are no longer purely in-memory concerns. They now interact with indexes, SQL translation, constraints, transactions, and database performance.
+
+One decision I would revisit later is the amount of eager loading performed by read-heavy endpoints. `Include()` is currently appropriate because the API needs related data, but as the dataset and traffic grow, I would benchmark the generated queries and consider projection into DTO-shaped SQL queries rather than loading full entity graphs.
+
+I would also revisit the current startup migration behavior for production deployments. Automatically applying migrations is convenient for development and containerized environments, but a production deployment strategy may eventually require migrations to be executed as an explicit deployment step instead.
+
+Most importantly, week 3 validated that the abstractions from the previous weeks were not unnecessary structure: the repository and service contracts allowed the persistence technology to change while the business layer remained largely stable.
+---
+# Week 3 — EF Core, Relational Modeling, & Containerization
+
+## What changed this week
+
+Week 3 moved the application from the week 1/2 in-memory design to a real relational persistence layer using **Entity Framework Core with Microsoft SQL Server**.
+
+This was not treated as a rewrite of the application. The existing layered architecture and repository/service abstractions were kept in place, and the concrete in-memory repositories were replaced by EF Core implementations through dependency injection.
+
+At the same time, the domain model was expanded from a single `Book` entity into a relational model involving **Books, Authors, Users, and Loans**, with explicit foreign keys, referential constraints, indexes, migrations, and database-level protections.
+
+---
+
+## 1. Entity Refactoring & Relational Domain Modeling
+
+### `Book.Author` became a real relationship
+
+In week 1, `Book` stored the author's name directly as text. In week 3 I changed that design so that `Book` now stores an `AuthorId` foreign key and references an `Author` entity.
+
+The relationship is modeled as **one Author → many Books** from the database perspective. EF Core configures `Book.AuthorId` as the foreign key and uses `DeleteBehavior.Restrict`, so deleting an author cannot silently delete its books. The database migration reflects the same restriction through the generated foreign-key constraint.
+
+I deliberately kept the relationship unidirectional from the entity-navigation perspective for now: `Book` knows its `Author`, while `Author` does not currently expose a `Books` collection. The important architectural decision was establishing the relational ownership through `AuthorId`, not duplicating author information inside every book.
+
+### Why I chose an `Author` entity
+
+Making authors first-class entities avoids storing duplicated author names across books and gives the system a stable identity for an author.
+
+This also makes future author-level operations possible without redesigning the book schema again.
+
+The refactoring had a real impact because `Book` was already used throughout the repository, service, mapping, and test layers. Rather than changing the architecture, I adapted those layers around the new domain relationship.
+
+---
+
+## 2. Loan Modeling & Borrowing History
+
+I introduced `Loan` as an **associative/domain entity** between `User` and `Book`, rather than simply placing a `UserId` and an `IsBorrowed` flag on `Book`.
+
+A loan stores:
+
+* `BookId`
+* `UserId`
+* `LoanedAt`
+* `DueAt`
+* `ReturnedAt`
+
+This design intentionally preserves borrowing history. A book can therefore participate in multiple loan records over its lifetime, while only one loan may be active at a time. Returning a book does not delete the loan record; it sets `ReturnedAt`, preserving the historical event.
+
+The database relationships from `Loan` to both `Book` and `User` also use `DeleteBehavior.Restrict`, preventing deletion of a parent record from silently destroying borrowing history.
+
+---
+
+## 3. Soft Delete & Data Lifecycle
+
+I continued the soft-delete decision from week 1 rather than switching to physical deletion once SQL Server was introduced.
+
+`Book`, `Author`, and `User` contain `IsDeleted`, `DeletedAt`, and timestamp fields, allowing records to be logically removed while remaining in the database for historical purposes.
+
+The important distinction in week 3 is that soft delete is now backed by a persistent database rather than an in-memory flag.
+
+For authors, the application also prevents deletion while an active, non-deleted book still references the author. That rule is checked in the service through `HasActiveBookByAuthorAsync`, while the database FK restriction provides a second layer of protection against destructive cascading behavior.
+
+---
+
+## 4. Switching from In-Memory Storage to EF Core + SQL Server
+
+The main persistence decision this week was replacing `InMemoryBookRepo` with an EF Core-backed `BookRepo`.
+
+The service layer did not need to become database-aware because `BookService` still depends on `IBookRepo`. The concrete implementation is selected through dependency injection in `Program.cs`:
+
+`IBookRepo → BookRepo`
+
+The same pattern is used for authors, users, and loans. This validated the repository abstraction from week 2: the abstraction was useful because changing the persistence mechanism did not require rewriting the controller/service architecture.
+
+EF Core is configured to use SQL Server through:
+
+`AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));`
+
+and the DAL references the EF Core and SQL Server provider packages directly.
+
+---
+
+## 5. Keeping EF Core Configuration Separate from the Entities
+
+I chose to keep database-specific configuration out of the entity classes and place it into dedicated `IEntityTypeConfiguration<T>` classes.
+
+For example, `BookConfiguration` defines:
+
+* primary key configuration
+* the `Author` relationship
+* `DeleteBehavior.Restrict`
+* required fields and length limits
+* decimal precision for ratings
+* indexes
+* unique ISBN constraint
+
+`LoanConfiguration` similarly defines its relationships, required fields, indexes, and active-loan constraint.
+
+`AppDbContext` then uses:
+
+`modelBuilder.ApplyConfigurationsFromAssembly(...)`
+
+so the context automatically discovers those configuration classes.
+
+I preferred this approach because the entities remain focused on domain state and behavior, while persistence-specific decisions such as indexes, SQL precision, and delete behavior stay in the DAL configuration layer.
+
+---
+
+## 6. Database-Level Concurrency Protection
+
+The most important concurrency decision in week 3 was the handling of simultaneous attempts to loan the same book.
+
+Application-level checking alone is not sufficient:
+
+`HasActiveLoanAsync(bookId)`
+
+can return `false` for two requests that execute at nearly the same time.
+
+Therefore, I added a **unique filtered SQL Server index** on `Loan.BookId` where `ReturnedAt IS NULL`.
+
+This means the database itself guarantees that there can be at most one active loan for a particular book. Historical returned loans are still allowed because their `ReturnedAt` value is no longer null.
+
+The service still performs the application-level availability check because it provides a clean and fast validation path for normal requests. The database constraint is the final protection against the race condition.
+
+If two requests pass the application check concurrently, one insert succeeds and the other receives a `DbUpdateException`, which the service converts into a domain-level `Conflict` result instead of exposing a database error directly to the client.
+
+This gave me an important design lesson: **application validation improves user-facing behavior, but database constraints must enforce invariants that can be violated by concurrency.**
+
+---
+
+## 7. Transactions & Unit of Work
+
+I evaluated the transaction requirement against the operations currently implemented in the domain rather than adding explicit transactions by default.
+
+The current write operations do not require an explicit transaction because each one represents a single logical database change persisted through one `SaveChangesAsync()` call. For example, creating a loan inserts one `Loan` record, returning a book updates one existing `Loan` record, and adding or updating a book persists one entity change.
+
+Because there is currently no business operation that performs multiple independent database writes that must succeed or fail together, introducing explicit transaction scopes would add complexity without protecting a real multi-step operation. `SaveChangesAsync()` is sufficient for these current atomic writes.
+
+The lending operation does have a different consistency problem: concurrency. Two users can pass the application-level `HasActiveLoanAsync()` check at nearly the same time. I therefore chose to solve that invariant at the database level with a unique filtered index on `Loan.BookId` where `ReturnedAt IS NULL`, rather than trying to solve it with an unnecessary transaction flow.
+
+If a future feature introduces a genuine multi-write business operation — for example, an operation that creates a loan while also updating another persistent record — that operation would be a candidate for an explicit EF Core transaction so that it cannot partially succeed.
+
+This was a deliberate design decision: I did not omit transactions because they were overlooked; I evaluated the requirement and chose not to introduce transaction management where the current domain does not need it.
+
+---
+
+## 8. Query Design & Performance Decisions
+
+The move to SQL Server made the performance considerations from week 2 concrete.
+
+`BookRepo.GetAllBooksAsync()` now builds an `IQueryable`, applies filters before pagination, calculates the total count, and then applies `OrderBy`, `Skip`, and `Take`. It also uses `AsNoTracking()` for read-only catalog queries.
+
+I kept eager loading of the author with:
+
+`Include(b => b.Author)`
+
+because the API needs author information together with book information. Since the endpoint is paginated, the amount of materialized data is bounded by the requested page size rather than loading the complete table into memory.
+
+I also added indexes for fields that participate in common lookups/filtering, including:
+
+* `AuthorId`
+* `DatePublished`
+* `Rating`
+* `Isbn`
+
+and made ISBN unique because it represents a unique book identifier in the catalog.
+
+This is a deliberate trade-off: indexes improve read performance but introduce additional write/storage cost, so I only added them to fields with a concrete query or integrity requirement.
+
+---
+
+## 9. Inspecting Generated SQL
+
+Moving from LINQ over an in-memory collection to EF Core introduced a new concern: I needed to verify what SQL EF Core was actually generating.
+
+For that reason, `BookRepo.GetAllBooksAsync()` uses `ToQueryString()` on the final paginated query during development. This allowed me to inspect the generated SQL while debugging instead of assuming that the LINQ expression translated into the query I intended.
+
+This fits the lesson from week 2: once persistence becomes a real database, abstraction should hide implementation details from the business layer, but the developer still needs visibility into those details while diagnosing performance or correctness problems.
+
+---
+
+## 10. EF Core Migrations
+
+The schema is managed through EF Core migrations rather than manually creating tables.
+
+The week 3 migration creates:
+
+* `Authors`
+* `Users`
+* `Books`
+* `Loans`
+
+and establishes their primary keys, foreign keys, indexes, uniqueness constraints, and default values.
+
+I reviewed the generated migration SQL rather than treating `Add-Migration` as a black box. This gave me a way to verify that important design decisions — especially `DeleteBehavior.Restrict` and the filtered unique active-loan index — were actually represented in the database schema.
+
+In development, the application also executes:
+
+`db.Database.Migrate()`
+
+during startup so the configured database is brought up to the latest migration automatically.
+
+---
+
+## 11. Containerization
+
+Week 3 also moved the application toward reproducible deployment using Docker.
+
+I created a **multi-stage Dockerfile**:
+
+### Build stage
+
+Uses the .NET SDK image to restore dependencies and publish the application.
+
+### Runtime stage
+
+Uses the lighter ASP.NET runtime image and copies only the published output into the final container.
+
+The final container exposes port `8080` and runs `App_PL.dll`.
+
+I chose the multi-stage approach so the final image does not need the full SDK and build-time tooling.
+
+---
+
+## 12. Docker Compose & Service Separation
+
+The application and database are orchestrated as separate containers through `compose.yaml`.
+
+There are currently two services:
+
+* `api` — the ASP.NET Core Web API
+* `db` — Microsoft SQL Server 2022
+
+The API connects to SQL Server through the Docker service name `db`, rather than assuming the database is running on the host machine.
+
+The SQL Server container also uses a named Docker volume:
+
+`sql_data`
+
+so database files survive container recreation instead of existing only inside the container filesystem.
+
+The API is configured to wait for the database health check before starting, reducing startup failures caused by the API connecting before SQL Server is ready.
+
+---
+
+## 13. Configuration & Secrets
+
+I deliberately kept database credentials outside the source code.
+
+`compose.yaml` reads the SQL Server password and database name from environment variables, and the API receives its connection string through the environment-based configuration key:
+
+`ConnectionStrings__DefaultConnection`
+
+An `example.env` file is committed as a template rather than storing the actual secret values in the repository.
+
+This keeps environment-specific configuration separate from application code and makes the same container configuration easier to reuse across development and deployment environments.
+
+---
+
+## 14. Database Choice
+
+I selected **Microsoft SQL Server** instead of continuing with an embedded or in-memory provider because the application is already a .NET system and the relational requirements now justify a full SQL database.
+
+SQL Server also fits naturally with EF Core, provides mature indexing and constraint support, and gives me a realistic production-oriented relational environment rather than a simplified test-only storage model.
+
+The repository explicitly uses the SQL Server EF Core provider, so the application's persistence behavior now reflects the database technology it is intended to run against.
+
+---
+
+## 15. Testing & Reliability
+
+Week 3 expanded the testing concern from purely business logic to persistence-related behavior and domain rules.
+
+The important principle remained the same as week 2: I am testing the decisions and behavior owned by my application rather than trying to test EF Core itself.
+
+The new persistence design introduced additional cases worth validating, especially:
+
+* relational author/book behavior
+* loan creation and return behavior
+* duplicate active-loan attempts
+* conflict handling when the database rejects a concurrent loan
+* soft-deleted records
+* repository queries with filters and pagination
+
+The code specifically handles `DbUpdateException` in the loan workflow and translates a database-level uniqueness conflict into `ErrorType.Conflict`, keeping infrastructure details from leaking through the API contract.
+
+---
+
+## What I learned / what I would improve
+
+The biggest architectural lesson this week was that moving from an in-memory repository to a real database changes the meaning of several earlier decisions.
+
+Pagination, filtering, concurrency, deletion, and query composition are no longer purely in-memory concerns. They now interact with indexes, SQL translation, constraints, transactions, and database performance.
+
+One decision I would revisit later is the amount of eager loading performed by read-heavy endpoints. `Include()` is currently appropriate because the API needs related data, but as the dataset and traffic grow, I would benchmark the generated queries and consider projection into DTO-shaped SQL queries rather than loading full entity graphs.
+
+I would also revisit the current startup migration behavior for production deployments. Automatically applying migrations is convenient for development and containerized environments, but a production deployment strategy may eventually require migrations to be executed as an explicit deployment step instead.
+
+Most importantly, week 3 validated that the abstractions from the previous weeks were not unnecessary structure: the repository and service contracts allowed the persistence technology to change while the business layer remained largely stable.
