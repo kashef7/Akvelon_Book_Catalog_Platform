@@ -22,7 +22,7 @@ public class LoanRepo : ILoanRepo
             .Include(l => l.User);
         var totalCount = await query.CountAsync();
         
-        IReadOnlyList<Loan> result = await query.Skip((loanQuery.PageNumber - 1) * loanQuery.PageSize).Take(loanQuery.PageSize).ToListAsync();
+        IReadOnlyList<Loan> result = await query.OrderBy(x => x.Id).Skip((loanQuery.PageNumber - 1) * loanQuery.PageSize).Take(loanQuery.PageSize).ToListAsync();
         return (result, totalCount);
     }
 

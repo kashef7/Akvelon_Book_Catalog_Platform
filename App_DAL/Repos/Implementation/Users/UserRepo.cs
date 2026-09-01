@@ -22,7 +22,7 @@ public class UserRepo : IUserRepo
         
         var totalCount = await query.CountAsync();
         
-        IReadOnlyList<User> result = await query.Skip((userQuery.PageNumber - 1) * userQuery.PageSize).Take(userQuery.PageSize).ToListAsync();
+        IReadOnlyList<User> result = await query.OrderBy(x => x.Id).Skip((userQuery.PageNumber - 1) * userQuery.PageSize).Take(userQuery.PageSize).ToListAsync();
         return (result, totalCount);
     }
 

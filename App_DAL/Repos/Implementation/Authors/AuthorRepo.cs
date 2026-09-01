@@ -22,7 +22,7 @@ public class AuthorRepo : IAuthorRepo
         
         var totalCount = await query.CountAsync();
         
-        IReadOnlyList<Author> result = await query.Skip((authorQuery.PageNumber - 1) * authorQuery.PageSize).Take(authorQuery.PageSize).ToListAsync();
+        IReadOnlyList<Author> result = await query.OrderBy(x => x.Id).Skip((authorQuery.PageNumber - 1) * authorQuery.PageSize).Take(authorQuery.PageSize).ToListAsync();
         return (result, totalCount);
     }
 

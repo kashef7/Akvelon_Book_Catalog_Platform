@@ -19,8 +19,13 @@ public class BookRepo : IBookRepo
         var query = _dbContext.Books.AsNoTracking().AsQueryable().Where(b => b.IsDeleted == false).ApplyQueryFilters(bookQuery).Include(b => b.Author);
         
         int totalCount = await query.CountAsync();
+
+        var paginatedQuery = query.OrderBy(x => x.Id).Skip((bookQuery.PageNumber - 1) * bookQuery.PageSize)
+            .Take(bookQuery.PageSize);
         
-        IReadOnlyList<Book> result = await query.Skip((bookQuery.PageNumber - 1) * bookQuery.PageSize).Take(bookQuery.PageSize).ToListAsync();
+        var sql = paginatedQuery.ToQueryString();
+        
+        IReadOnlyList<Book> result = await paginatedQuery.ToListAsync();
         return (result, totalCount);
     }
 
