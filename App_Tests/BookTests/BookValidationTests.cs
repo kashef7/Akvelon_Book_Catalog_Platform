@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using App_BLL.Dtos.BooksDtos;
 using App_BLL.QueryParams.Book;
-using App_Common.Common.Book;
 
 namespace App_Tests.BookTests;
 
@@ -23,10 +22,10 @@ public class BookValidationTests
         {
             Title = "Clean Code",
             Description = "A handbook of agile software craftsmanship",
-            AuthorName = "Robert C. Martin",
+            Isbn = "9780132350884",
+            AuthorId = Guid.NewGuid(),
             DatePublished = _today,
-            Rating = 4.5m,
-            Status = BookStatus.NotStarted
+            Rating = 4.5m
         };
     }
 
@@ -36,10 +35,8 @@ public class BookValidationTests
         {
             Title = "Clean Code",
             Description = "A handbook of agile software craftsmanship",
-            AuthorName = "Robert C. Martin",
             DatePublished = _today,
-            Rating = 4.5m,
-            Status = BookStatus.NotStarted
+            Rating = 4.5m
         };
     }
 
@@ -59,20 +56,20 @@ public class BookValidationTests
 
     //test BookCreateDto fails when required string fields are null or empty
     [Theory]
-    [InlineData(null, "Description", "Author")]
-    [InlineData("Title", null, "Author")]
+    [InlineData(null, "Description", "9780132350884")]
+    [InlineData("Title", null, "9780132350884")]
     [InlineData("Title", "Description", null)]
-    public void BookCreateDto_RequiredFieldsMissing_FailsValidation(string? title, string? description, string? authorName)
+    public void BookCreateDto_RequiredFieldsMissing_FailsValidation(string? title, string? description, string? isbn)
     {
         //Arrange
         var dto = new BookCreateDto
         {
             Title = title!,
             Description = description!,
-            AuthorName = authorName!,
+            Isbn = isbn!,
+            AuthorId = Guid.NewGuid(),
             DatePublished = _today,
-            Rating = 4.0m,
-            Status = BookStatus.NotStarted
+            Rating = 4.0m
         };
 
         //Act
@@ -84,20 +81,19 @@ public class BookValidationTests
 
     //test BookCreateDto fails when string lengths exceed MaxLength attributes
     [Theory]
-    [InlineData(101, 50, 50, nameof(BookCreateDto.Title))]
-    [InlineData(50, 301, 50, nameof(BookCreateDto.Description))]
-    [InlineData(50, 50, 71, nameof(BookCreateDto.AuthorName))]
-    public void BookCreateDto_ExceedsMaxLength_FailsValidation(int titleLen, int descLen, int authorLen, string expectedErrorMember)
+    [InlineData(101, 50, nameof(BookCreateDto.Title))]
+    [InlineData(50, 1001, nameof(BookCreateDto.Description))]
+    public void BookCreateDto_ExceedsMaxLength_FailsValidation(int titleLen, int descLen, string expectedErrorMember)
     {
         //Arrange
         var dto = new BookCreateDto
         {
             Title = new string('a', titleLen),
             Description = new string('b', descLen),
-            AuthorName = new string('c', authorLen),
+            Isbn = "9780132350884",
+            AuthorId = Guid.NewGuid(),
             DatePublished = _today,
-            Rating = 4.0m,
-            Status = BookStatus.NotStarted
+            Rating = 4.0m
         };
 
         //Act
@@ -105,6 +101,23 @@ public class BookValidationTests
 
         //Assert
         Assert.Contains(results, r => r.MemberNames.Contains(expectedErrorMember));
+    }
+
+    //test BookCreateDto fails when isbn length is not exactly 13 characters
+    [Theory]
+    [InlineData("123456789012")] // 12 chars (too short)
+    [InlineData("12345678901234")] // 14 chars (too long)
+    public void BookCreateDto_InvalidIsbnLength_FailsValidation(string invalidIsbn)
+    {
+        //Arrange
+        var dto = CreateValidBookCreateDto();
+        dto.Isbn = invalidIsbn;
+
+        //Act
+        var results = ValidateModel(dto);
+
+        //Assert
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(BookCreateDto.Isbn)));
     }
 
     //test BookCreateDto fails when rating is out of 0 to 5 range
@@ -125,21 +138,6 @@ public class BookValidationTests
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(BookCreateDto.Rating)));
     }
 
-    //test BookCreateDto fails when status is not a valid enum value
-    [Fact]
-    public void BookCreateDto_InvalidEnumStatus_FailsValidation()
-    {
-        //Arrange
-        var dto = CreateValidBookCreateDto();
-        dto.Status = (BookStatus)999;
-
-        //Act
-        var results = ValidateModel(dto);
-
-        //Assert
-        Assert.Contains(results, r => r.MemberNames.Contains(nameof(BookCreateDto.Status)));
-    }
-
     //test BookEditDto valid model passes validation
     [Fact]
     public void BookEditDto_ValidModel_PassesValidation()
@@ -156,20 +154,17 @@ public class BookValidationTests
 
     //test BookEditDto fails when required fields are missing
     [Theory]
-    [InlineData(null, "Description", "Author")]
-    [InlineData("Title", null, "Author")]
-    [InlineData("Title", "Description", null)]
-    public void BookEditDto_RequiredFieldsMissing_FailsValidation(string? title, string? description, string? authorName)
+    [InlineData(null, "Description")]
+    [InlineData("Title", null)]
+    public void BookEditDto_RequiredFieldsMissing_FailsValidation(string? title, string? description)
     {
         //Arrange
         var dto = new BookEditDto
         {
             Title = title!,
             Description = description!,
-            AuthorName = authorName!,
             DatePublished = _today,
-            Rating = 4.0m,
-            Status = BookStatus.NotStarted
+            Rating = 4.0m
         };
 
         //Act
@@ -194,52 +189,6 @@ public class BookValidationTests
 
         //Assert
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(BookEditDto.Rating)));
-    }
-
-    //test BookEditDto fails when status is invalid enum
-    [Fact]
-    public void BookEditDto_InvalidEnumStatus_FailsValidation()
-    {
-        //Arrange
-        var dto = CreateValidBookEditDto();
-        dto.Status = (BookStatus)999;
-
-        //Act
-        var results = ValidateModel(dto);
-
-        //Assert
-        Assert.Contains(results, r => r.MemberNames.Contains(nameof(BookEditDto.Status)));
-    }
-
-    //test BookStatusDto passes validation for valid enum status
-    [Theory]
-    [InlineData(BookStatus.NotStarted)]
-    [InlineData(BookStatus.Started)]
-    [InlineData(BookStatus.Finished)]
-    public void BookStatusDto_ValidStatus_PassesValidation(BookStatus status)
-    {
-        //Arrange
-        var dto = new BookStatusDto { Status = status };
-
-        //Act
-        var results = ValidateModel(dto);
-
-        //Assert
-        Assert.Empty(results);
-    }
-
-    //test BookStatusDto fails validation for invalid enum status
-    [Fact]
-    public void BookStatusDto_InvalidStatus_FailsValidation()
-    {
-        //Arrange
-        var dto = new BookStatusDto { Status = (BookStatus)999 };
-
-        //Act
-        var results = ValidateModel(dto);
-
-        //Assert
-        Assert.Contains(results, r => r.MemberNames.Contains(nameof(BookStatusDto.Status)));
     }
 
     //test BookRatingDto passes validation for ratings within 0 to 5
@@ -283,8 +232,8 @@ public class BookValidationTests
         var query = new BookQueryParams
         {
             Title = "Clean Code",
-            Status = BookStatus.Started,
-            Rating = 4.5m
+            MinRating = 4.0m,
+            MaxRating = 5.0m
         };
 
         //Act
@@ -311,33 +260,35 @@ public class BookValidationTests
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(BookQueryParams.Title)));
     }
 
-    //test BookQueryParams fails validation when rating is out of 0 to 5 range
+    //test BookQueryParams fails validation when min rating is out of 0 to 5 range
     [Theory]
     [InlineData(-1.0)]
     [InlineData(6.0)]
-    public void BookQueryParams_RatingOutOfRange_FailsValidation(decimal rating)
+    public void BookQueryParams_MinRatingOutOfRange_FailsValidation(decimal rating)
     {
         //Arrange
-        var query = new BookQueryParams { Rating = rating };
+        var query = new BookQueryParams { MinRating = rating };
 
         //Act
         var results = ValidateModel(query);
 
         //Assert
-        Assert.Contains(results, r => r.MemberNames.Contains(nameof(BookQueryParams.Rating)));
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(BookQueryParams.MinRating)));
     }
 
-    //test BookQueryParams fails validation when status is invalid enum
-    [Fact]
-    public void BookQueryParams_InvalidEnumStatus_FailsValidation()
+    //test BookQueryParams fails validation when max rating is out of 0 to 5 range
+    [Theory]
+    [InlineData(-1.0)]
+    [InlineData(6.0)]
+    public void BookQueryParams_MaxRatingOutOfRange_FailsValidation(decimal rating)
     {
         //Arrange
-        var query = new BookQueryParams { Status = (BookStatus)999 };
+        var query = new BookQueryParams { MaxRating = rating };
 
         //Act
         var results = ValidateModel(query);
 
         //Assert
-        Assert.Contains(results, r => r.MemberNames.Contains(nameof(BookQueryParams.Status)));
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(BookQueryParams.MaxRating)));
     }
 }

@@ -1,10 +1,11 @@
-﻿using App_BLL.Common.Paging;
+using App_BLL.Common.Paging;
 using App_BLL.Common.Result;
 using App_BLL.Dtos.BooksDtos;
 using App_BLL.QueryParams.Book;
 using App_BLL.Services.Abstraction.Books;
 using App_Common.Common.Book;
 using App_DAL.Entities.Books;
+using App_DAL.Repos.Abstraction.Authors;
 using App_DAL.Repos.Abstraction.Books;
 using AutoMapper;
 using Microsoft.Extensions.Logging;
@@ -16,11 +17,13 @@ namespace App_BLL.Services.Implementation.Books;
 public class BookService : IBookService
 {
     private readonly IBookRepo _bookRepo;
+    private readonly IAuthorRepo _authorRepo;
     private readonly IMapper _mapper;
     private readonly ILogger<BookService> _logger;
-    public BookService(IBookRepo repo, IMapper mapper,  ILogger<BookService> logger)
+    public BookService(IBookRepo repo,IAuthorRepo authorRepo, IMapper mapper,  ILogger<BookService> logger)
     {
         _bookRepo = repo;
+        _authorRepo = authorRepo;
         _mapper = mapper;
         _logger = logger;
         
@@ -47,20 +50,41 @@ public class BookService : IBookService
     {
         var book = await _bookRepo.GetBookByIdAsync(id);
         if (book is null)
+        {
+            _logger.LogWarning("Book {BookId} Not Found", id);
             return Result<BookGetDto>.Failed(ErrorType.NotFound, "Book Not Found");
+        }
+
+        return Result<BookGetDto>.Success(_mapper.Map<BookGetDto>(book));
+    }
+
+    public async Task<Result<BookGetDto>> GetBookByIsbnAsync(string isbn)
+    {
+        var book = await _bookRepo.GetBookByIsbnAsync(isbn);
+        if (book is null)
+        {
+            _logger.LogWarning("Book with Isbn:{BookIsbn} Not Found", isbn);
+            return Result<BookGetDto>.Failed(ErrorType.NotFound, "Book Not Found");
+        }
 
         return Result<BookGetDto>.Success(_mapper.Map<BookGetDto>(book));
     }
 
     public async Task<Result<Guid>> AddBookAsync(BookCreateDto book)
     {
-        var today = DateOnly.FromDateTime(DateTime.Now);
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
         if (book.DatePublished > today)
         {
-            _logger.LogWarning("Adding Book Failed : Date Published {DatePublished} Can't be in the future", book.DatePublished);
+            _logger.LogWarning("Creating Book Failed : Date Published {DatePublished} Can't be in the future", book.DatePublished);
             return Result<Guid>.Failed(ErrorType.BadRequest, "Book Date Published Can't be in the future");
         }
-        var newBook = _mapper.Map<Book>(book);
+        var author = await _authorRepo.GetAuthorByIdAsync(book.AuthorId);
+        if (author == null)
+        {
+            _logger.LogWarning("Creating Book Failed : Author {AuthorId} Not Found", book.AuthorId);
+            return Result<Guid>.Failed(ErrorType.NotFound, "Author Not Found");
+        }
+        var newBook = new Book(book.Isbn, book.Title,book.Description,author,book.DatePublished,book.Rating);
         await _bookRepo.AddBookAsync(newBook);
         _logger.LogInformation("Book {BookId} Added Successfully", newBook.Id);
         return Result<Guid>.Success(newBook.Id);
@@ -78,34 +102,16 @@ public class BookService : IBookService
             _logger.LogWarning("Update Book Failed : Book {BookId} Is Deleted", editedBookId);
             return Result.Failed(ErrorType.NotFound, "Book is Deleted");
         }
-        var today = DateOnly.FromDateTime(DateTime.Now);
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
         if (book.DatePublished > today)
         {
             _logger.LogWarning("Update Book Failed : Date Published {DatePublished} Can't be in the future", book.DatePublished);
             return Result.Failed(ErrorType.BadRequest, "Book Date Published Can't be in the future");
         }
-        bookToUpdate.UpdateBook(book.Title,book.Description,book.AuthorName,book.DatePublished,book.Rating,book.Status);
+        bookToUpdate.UpdateBook(book.Title, book.Description, book.DatePublished, book.Rating);
+        await _bookRepo.SaveChangesAsync();
         _logger.LogInformation("Book {BookId} Updated", editedBookId);
         return Result.Success("Book Updated");
-    }
-
-    public async Task<Result> UpdateBookStatusAsync(Guid id, BookStatusDto status)
-    {
-        var bookToUpdate = await _bookRepo.GetBookByIdAsync(id);
-        if (bookToUpdate == null)
-        {
-            _logger.LogWarning("Update Book Status Failed : Book {BookId} Not Found", id);
-            return Result.Failed(ErrorType.NotFound, "Book Not Found");
-        }else if (bookToUpdate.IsDeleted)
-        {
-            _logger.LogWarning("Update Book Status Failed : Book {BookId} Is Deleted", id);
-            return Result.Failed(ErrorType.NotFound, "Book is Deleted");
-        }
-
-        var bookToUpdateStatus = status.Status;
-        bookToUpdate.UpdateStatus(bookToUpdateStatus);
-        _logger.LogInformation("Book {BookId} Status Updated to {Status}", id, bookToUpdateStatus);
-        return Result.Success("Book Status Updated");
     }
 
     public async Task<Result> UpdateBookRatingAsync(Guid id, decimal rating)
@@ -121,6 +127,7 @@ public class BookService : IBookService
             return Result.Failed(ErrorType.NotFound, "Book is Deleted");
         }
         bookToUpdate.UpdateRating(rating);
+        await _bookRepo.SaveChangesAsync();
         _logger.LogInformation("Book {BookId} Rating Updated to {Rating}", id , rating);
         return Result.Success("Book Ratings Updated");
     }
@@ -137,7 +144,8 @@ public class BookService : IBookService
             _logger.LogWarning("Deleting Book Failed : Book {BookId} is already Deleted", id);
             return Result.Failed(ErrorType.NotFound, "Book is already Deleted");
         } 
-        await _bookRepo.DeleteBookAsync(bookToDelete.Id);
+        bookToDelete.DeleteBook();
+        await _bookRepo.SaveChangesAsync();
         _logger.LogInformation("Book {BookId} Deleted", id);
         return Result.Success("Book Deleted");
     }
