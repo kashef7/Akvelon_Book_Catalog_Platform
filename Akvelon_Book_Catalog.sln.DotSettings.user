@@ -7,6 +7,7 @@
     &lt;TestId&gt;xUnit::824B9B72-D05E-07D4-C6AA-9327B0D5935C::net10.0::App_Tests_Integration.AuthorApiTests.AuthorApiTests&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;xUnit::824B9B72-D05E-07D4-C6AA-9327B0D5935C::net10.0::App_Tests_Integration.UserApiTests.UserApiTests&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;xUnit::824B9B72-D05E-07D4-C6AA-9327B0D5935C::net10.0::App_Tests_Integration.LoanApiTests.LoanApiTests&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::824B9B72-D05E-07D4-C6AA-9327B0D5935C::net10.0::App_Tests_Integration.EndToEnd.AppWorkflowApiTests&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
 	
