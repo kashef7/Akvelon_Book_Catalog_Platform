@@ -21,16 +21,20 @@ using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 
 
+var builder = WebApplication.CreateBuilder(args);
 
-var envPath = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory())!.FullName, ".env");
-
-if (File.Exists(envPath))
+if (builder.Environment.IsDevelopment())
 {
-    Env.Load(envPath);
+    var envPath = Path.Combine(
+        Directory.GetParent(Directory.GetCurrentDirectory())!.FullName,
+        ".env");
+
+    if (File.Exists(envPath))
+    {
+        Env.Load(envPath);
+    }
 }
 
-
-var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
                        ?? throw new InvalidOperationException("DefaultConnection is not configured. Check your .env file or environment variables.");
@@ -82,4 +86,6 @@ app.MapControllers();
 
 
 app.Run();
+
+public partial class Program;
 

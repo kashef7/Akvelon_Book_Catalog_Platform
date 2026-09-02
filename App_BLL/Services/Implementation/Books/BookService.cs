@@ -84,6 +84,13 @@ public class BookService : IBookService
             _logger.LogWarning("Creating Book Failed : Author {AuthorId} Not Found", book.AuthorId);
             return Result<Guid>.Failed(ErrorType.NotFound, "Author Not Found");
         }
+        var existingBook = await _bookRepo.GetBookByIsbnAsync(book.Isbn);
+        if (existingBook != null)
+        {
+            _logger.LogWarning("Creating Book Failed : Book with Isbn:{BookIsbn} already exists", book.Isbn);
+            return Result<Guid>.Failed(ErrorType.Conflict, "Book with this ISBN already exists");
+        }
+
         var newBook = new Book(book.Isbn, book.Title,book.Description,author,book.DatePublished,book.Rating);
         await _bookRepo.AddBookAsync(newBook);
         _logger.LogInformation("Book {BookId} Added Successfully", newBook.Id);

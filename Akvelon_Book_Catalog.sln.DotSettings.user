@@ -1,7 +1,13 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
 	<s:Int64 x:Key="/Default/Environment/Hierarchy/Build/BuildTool/MsbuildVersion/@EntryValue">1179654</s:Int64>
 	<s:String x:Key="/Default/Environment/Hierarchy/Build/BuildTool/CustomBuildToolPath/@EntryValue">C:\Program Files\dotnet\sdk\10.0.300\MSBuild.dll</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=f284e2a0_002D6e23_002D407e_002D8c6b_002D38aff991f47a/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="All tests from Solution" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
-  &lt;Solution /&gt;&#xD;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=99b390a0_002D3dec_002D4d3b_002D86a9_002Daf45fa183420/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="GetAllBooksAsync_ReturnsOkStatus" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;xUnit::824B9B72-D05E-07D4-C6AA-9327B0D5935C::net10.0::App_Tests_Integration.BookApiTests.BookApiTests&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::824B9B72-D05E-07D4-C6AA-9327B0D5935C::net10.0::App_Tests_Integration.AuthorApiTests.AuthorApiTests&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::824B9B72-D05E-07D4-C6AA-9327B0D5935C::net10.0::App_Tests_Integration.UserApiTests.UserApiTests&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::824B9B72-D05E-07D4-C6AA-9327B0D5935C::net10.0::App_Tests_Integration.LoanApiTests.LoanApiTests&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
+	
 	</wpf:ResourceDictionary>

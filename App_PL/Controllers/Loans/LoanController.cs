@@ -25,7 +25,7 @@ public class LoanController : ControllerBase
         return result.IsSuccess ? Ok(result.Data) : HandleFailure(result);
     }
 
-    [HttpGet("{id:guid}")]
+    [HttpGet("{id:guid}",Name = "GetLoanById")]
     public async Task<IActionResult> GetLoanByIdAsync(Guid id)
     {
         var result = await _loanService.GetLoanByIdAsync(id);
@@ -36,10 +36,10 @@ public class LoanController : ControllerBase
     public async Task<IActionResult> LoanBookAsync(LoanCreateDto loan)
     {
         var result = await _loanService.LoanBookAsync(loan);
-        return result.IsSuccess ? CreatedAtAction( nameof(GetLoanByIdAsync), new { id = result.Data }, new { id = result.Data }) : HandleFailure(result);
+        return result.IsSuccess ? CreatedAtAction("GetLoanById", new { id = result.Data }, new { id = result.Data }) : HandleFailure(result);
     }
 
-    [HttpPatch("{id:guid}")]
+    [HttpPatch("returnLoan/{id:guid}")]
     public async Task<IActionResult> ReturnLoanAsync(Guid id)
     {
         var result = await _loanService.ReturnBookAsync(id);
