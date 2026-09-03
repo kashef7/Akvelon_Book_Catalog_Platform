@@ -18,6 +18,7 @@ using App_DAL.Repos.Implementation.Loans;
 using App_DAL.Repos.Implementation.Users;
 using App_PL.Exceptions;
 using DotNetEnv;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -59,6 +60,9 @@ builder.Services.AddScoped<ILoanService, LoanService>();
 
 builder.Services.AddAutoMapper(x => x.AddProfile(new DomainProfile()));
 
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<AppDbContext>(name: "database", tags: new[] { "ready" });
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -81,6 +85,16 @@ app.UseHttpsRedirection();
 app.UseRouting();
 app.UseAuthorization();
 
+
+app.MapHealthChecks("/health/live",new HealthCheckOptions()
+{
+    Predicate = _ => false
+});
+
+app.MapHealthChecks("/health/ready",new HealthCheckOptions()
+{
+    Predicate = check => check.Tags.Contains("ready"),
+});
 
 app.MapControllers();
 
