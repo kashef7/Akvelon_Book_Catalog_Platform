@@ -53,7 +53,7 @@ public class LoanService : ILoanService
         var  loan = await _loanRepo.GetLoanByIdAsync(id);
         if (loan == null)
         {
-            _logger.LogError("Loan with id {LoanId} not found",id);
+            _logger.LogWarning("Loan with id {LoanId} not found",id);
             return Result<LoanGetDto>.Failed(ErrorType.NotFound,"Loan Not Found");
         }
         return Result<LoanGetDto>.Success(_mapper.Map<LoanGetDto>(loan));
@@ -64,13 +64,13 @@ public class LoanService : ILoanService
         var book =  await _bookRepo.GetBookByIdAsync(loanCreateDto.BookId);
         if (book == null)
         {
-            _logger.LogError("Loaning book failed : Book with id {BookId} not found",loanCreateDto.BookId);
+            _logger.LogWarning("Loaning book failed : Book with id {BookId} not found",loanCreateDto.BookId);
             return Result<Guid>.Failed(ErrorType.NotFound,"Book Not Found");
         }
         var user = await _userRepo.GetUserByIdAsync(loanCreateDto.UserId);
         if (user == null)
         {
-            _logger.LogError("Loaning book failed : User with id {UserId} not found",loanCreateDto.UserId);
+            _logger.LogWarning("Loaning book failed : User with id {UserId} not found",loanCreateDto.UserId);
             return Result<Guid>.Failed(ErrorType.NotFound,"User Not Found");
         }
 
@@ -103,7 +103,7 @@ public class LoanService : ILoanService
         var loan = await _loanRepo.GetLoanByIdAsync(id);
         if (loan == null)
         {
-            _logger.LogError("Returning Book Failed : Loan with id {LoanId} not found",id);
+            _logger.LogWarning("Returning Book Failed : Loan with id {LoanId} not found",id);
             return Result.Failed(ErrorType.NotFound,"Loan Not Found");
         }
 
