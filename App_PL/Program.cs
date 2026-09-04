@@ -19,7 +19,6 @@ using App_DAL.Repos.Implementation.Users;
 using App_PL.ConfigValidators.Database;
 using App_PL.Exceptions;
 using App_PL.Middlewares.loggingMiddleware;
-using App_PL.Middlewares.shutdownMiddleware;
 using App_PL.Services.LoggingServices;
 using DotNetEnv;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -106,6 +105,8 @@ try
 
     var app = builder.Build();
     
+    app.Services.GetRequiredService<ShutdownLoggingService>();
+    
     if (app.Environment.IsDevelopment())
     {
         app.MapOpenApi();
@@ -124,7 +125,7 @@ try
     app.UseSerilogRequestLogging();
     app.UseAuthorization();
     
-    app.UseMiddleware<ShutdownAwareMiddleware>();
+    //app.UseMiddleware<ShutdownAwareMiddleware>();
 
     app.MapHealthChecks("/health/live", new HealthCheckOptions
     {
