@@ -19,30 +19,30 @@ public class LoanController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetLoansAsync([FromQuery] LoanQueryParams query)
+    public async Task<IActionResult> GetLoansAsync([FromQuery] LoanQueryParams query, CancellationToken cancellationToken)
     {
-        var result = await _loanService.GetLoansAsync(query);
+        var result = await _loanService.GetLoansAsync(query, cancellationToken);
         return result.IsSuccess ? Ok(result.Data) : HandleFailure(result);
     }
 
     [HttpGet("{id:guid}",Name = "GetLoanById")]
-    public async Task<IActionResult> GetLoanByIdAsync(Guid id)
+    public async Task<IActionResult> GetLoanByIdAsync(Guid id, CancellationToken cancellationToken)
     {
-        var result = await _loanService.GetLoanByIdAsync(id);
+        var result = await _loanService.GetLoanByIdAsync(id, cancellationToken);
         return result.IsSuccess ? Ok(result.Data) : HandleFailure(result);
     }
 
     [HttpPost]
-    public async Task<IActionResult> LoanBookAsync(LoanCreateDto loan)
+    public async Task<IActionResult> LoanBookAsync(LoanCreateDto loan, CancellationToken cancellationToken)
     {
-        var result = await _loanService.LoanBookAsync(loan);
+        var result = await _loanService.LoanBookAsync(loan, cancellationToken);
         return result.IsSuccess ? CreatedAtAction("GetLoanById", new { id = result.Data }, new { id = result.Data }) : HandleFailure(result);
     }
 
     [HttpPatch("returnLoan/{id:guid}")]
-    public async Task<IActionResult> ReturnLoanAsync(Guid id)
+    public async Task<IActionResult> ReturnLoanAsync(Guid id, CancellationToken cancellationToken)
     {
-        var result = await _loanService.ReturnBookAsync(id);
+        var result = await _loanService.ReturnBookAsync(id, cancellationToken);
         return result.IsSuccess ? NoContent() : HandleFailure(result);
     }
     

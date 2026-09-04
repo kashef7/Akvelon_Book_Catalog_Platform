@@ -55,12 +55,12 @@ public class BookServiceTests
             new BookGetDto { Id = Guid.NewGuid(), Title = "Book3", Description = "The 3rd book", AuthorName = "Author3", DatePublished = _today, Rating = 5 },
         };
 
-        _bookRepoMock.Setup(repo => repo.GetAllBooksAsync(It.IsAny<BookQuery>())).ReturnsAsync((books, totalCount));
+        _bookRepoMock.Setup(repo => repo.GetAllBooksAsync(It.IsAny<BookQuery>(), It.IsAny<CancellationToken>())).ReturnsAsync((books, totalCount));
         _mapperMock.Setup(m => m.Map<BookQuery>(bookQuery)).Returns(mappedQuery);
         _mapperMock.Setup(m => m.Map<IReadOnlyList<BookGetDto>>(books)).Returns(bookDto);
 
         //Act
-        var result = await _bookService.GetAllBooksAsync(bookQuery);
+        var result = await _bookService.GetAllBooksAsync(bookQuery, CancellationToken.None);
 
         //Assert
         Assert.True(result.IsSuccess);
@@ -70,7 +70,7 @@ public class BookServiceTests
         Assert.Equal(bookQuery.PageSize, result.Data.PageSize);
         _mapperMock.Verify(m => m.Map<BookQuery>(bookQuery), Times.Once);
         _mapperMock.Verify(m => m.Map<IReadOnlyList<BookGetDto>>(books), Times.Once);
-        _bookRepoMock.Verify(repo => repo.GetAllBooksAsync(mappedQuery), Times.Once);
+        _bookRepoMock.Verify(repo => repo.GetAllBooksAsync(mappedQuery, It.IsAny<CancellationToken>()), Times.Once);
     }
     
     //test GetAllBooksAsync maps and forwards filter values to the repo unchanged
@@ -96,18 +96,18 @@ public class BookServiceTests
             new BookGetDto { Id = Guid.NewGuid(), Title = "Book1", Description = "The 1st book", AuthorName = "Author1", DatePublished = _today, Rating = 5 },
         };
 
-        _bookRepoMock.Setup(repo => repo.GetAllBooksAsync(It.IsAny<BookQuery>())).ReturnsAsync((books, totalCount));
+        _bookRepoMock.Setup(repo => repo.GetAllBooksAsync(It.IsAny<BookQuery>(), It.IsAny<CancellationToken>())).ReturnsAsync((books, totalCount));
         _mapperMock.Setup(m => m.Map<BookQuery>(bookQuery)).Returns(mappedQuery);
         _mapperMock.Setup(m => m.Map<IReadOnlyList<BookGetDto>>(books)).Returns(bookDto);
 
         //Act
-        var result = await _bookService.GetAllBooksAsync(bookQuery);
+        var result = await _bookService.GetAllBooksAsync(bookQuery, CancellationToken.None);
 
         //Assert
         Assert.True(result.IsSuccess);
         Assert.Equal(bookDto, result.Data!.Items);
         _mapperMock.Verify(m => m.Map<BookQuery>(bookQuery), Times.Once);
-        _bookRepoMock.Verify(repo => repo.GetAllBooksAsync(mappedQuery), Times.Once);
+        _bookRepoMock.Verify(repo => repo.GetAllBooksAsync(mappedQuery, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     //test GetBookAsync returns book when the id is found
@@ -119,11 +119,11 @@ public class BookServiceTests
         var book = new Book("9780132350884", "Book1", "The 1st book", author, _today, 5);
         var bookDto = new BookGetDto { Id = book.Id, Title = "Book1", Description = "The 1st book", AuthorName = "Author1", DatePublished = _today, Rating = 5 };
 
-        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(book.Id)).ReturnsAsync(book);
+        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(book.Id, It.IsAny<CancellationToken>())).ReturnsAsync(book);
         _mapperMock.Setup(m => m.Map<BookGetDto>(book)).Returns(bookDto);
 
         //Act
-        var result = await _bookService.GetBookAsync(book.Id);
+        var result = await _bookService.GetBookAsync(book.Id, CancellationToken.None);
 
         //Assert
         Assert.True(result.IsSuccess);
@@ -136,10 +136,10 @@ public class BookServiceTests
     {
         //Arrange
         var bookId = Guid.NewGuid();
-        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(bookId)).ReturnsAsync((Book?)null);
+        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(bookId, It.IsAny<CancellationToken>())).ReturnsAsync((Book?)null);
 
         //Act
-        var result = await _bookService.GetBookAsync(bookId);
+        var result = await _bookService.GetBookAsync(bookId, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -155,11 +155,11 @@ public class BookServiceTests
         var book = new Book("9780132350884", "Book1", "The 1st book", author, _today, 5);
         var bookDto = new BookGetDto { Id = book.Id, Title = "Book1", Description = "The 1st book", AuthorName = "Author1", DatePublished = _today, Rating = 5 };
 
-        _bookRepoMock.Setup(repo => repo.GetBookByIsbnAsync(book.Isbn)).ReturnsAsync(book);
+        _bookRepoMock.Setup(repo => repo.GetBookByIsbnAsync(book.Isbn, It.IsAny<CancellationToken>())).ReturnsAsync(book);
         _mapperMock.Setup(m => m.Map<BookGetDto>(book)).Returns(bookDto);
 
         //Act
-        var result = await _bookService.GetBookByIsbnAsync(book.Isbn);
+        var result = await _bookService.GetBookByIsbnAsync(book.Isbn, CancellationToken.None);
 
         //Assert
         Assert.True(result.IsSuccess);
@@ -172,10 +172,10 @@ public class BookServiceTests
     {
         //Arrange
         var isbn = "9780132350884";
-        _bookRepoMock.Setup(repo => repo.GetBookByIsbnAsync(isbn)).ReturnsAsync((Book?)null);
+        _bookRepoMock.Setup(repo => repo.GetBookByIsbnAsync(isbn, It.IsAny<CancellationToken>())).ReturnsAsync((Book?)null);
 
         //Act
-        var result = await _bookService.GetBookByIsbnAsync(isbn);
+        var result = await _bookService.GetBookByIsbnAsync(isbn, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -193,11 +193,11 @@ public class BookServiceTests
             Title = "Book1", Description = "The 1st book", Isbn = "9780132350884", AuthorId = author.Id,
             DatePublished = _today, Rating = 5
         };
-        _authorRepoMock.Setup(repo => repo.GetAuthorByIdAsync(author.Id)).ReturnsAsync(author);
+        _authorRepoMock.Setup(repo => repo.GetAuthorByIdAsync(author.Id, It.IsAny<CancellationToken>())).ReturnsAsync(author);
         _bookRepoMock.Setup(repo => repo.AddBookAsync(It.IsAny<Book>())).Returns(Task.CompletedTask);
 
         //Act
-        var result = await _bookService.AddBookAsync(createDto);
+        var result = await _bookService.AddBookAsync(createDto, CancellationToken.None);
 
         //Assert
         Assert.True(result.IsSuccess);
@@ -216,10 +216,10 @@ public class BookServiceTests
             Title = "Book1", Description = "The 1st book", Isbn = "9780132350884", AuthorId = authorId,
             DatePublished = _today, Rating = 5
         };
-        _authorRepoMock.Setup(repo => repo.GetAuthorByIdAsync(authorId)).ReturnsAsync((Author?)null);
+        _authorRepoMock.Setup(repo => repo.GetAuthorByIdAsync(authorId, It.IsAny<CancellationToken>())).ReturnsAsync((Author?)null);
 
         //Act
-        var result = await _bookService.AddBookAsync(createDto);
+        var result = await _bookService.AddBookAsync(createDto, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -243,7 +243,7 @@ public class BookServiceTests
         };
 
         //Act
-        var result = await _bookService.AddBookAsync(createDto);
+        var result = await _bookService.AddBookAsync(createDto, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -263,10 +263,10 @@ public class BookServiceTests
             Title = "NewTitle", Description = "NewDesc",
             DatePublished = _today, Rating = 4
         };
-        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(existingBook.Id)).ReturnsAsync(existingBook);
+        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(existingBook.Id, It.IsAny<CancellationToken>())).ReturnsAsync(existingBook);
 
         //Act
-        var result = await _bookService.UpdateBookAsync(editDto, existingBook.Id);
+        var result = await _bookService.UpdateBookAsync(editDto, existingBook.Id, CancellationToken.None);
 
         //Assert
         Assert.True(result.IsSuccess);
@@ -285,10 +285,10 @@ public class BookServiceTests
             Title = "NewTitle", Description = "NewDesc",
             DatePublished = _today, Rating = 4
         };
-        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(bookId)).ReturnsAsync((Book?)null);
+        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(bookId, It.IsAny<CancellationToken>())).ReturnsAsync((Book?)null);
 
         //Act
-        var result = await _bookService.UpdateBookAsync(editDto, bookId);
+        var result = await _bookService.UpdateBookAsync(editDto, bookId, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -308,10 +308,10 @@ public class BookServiceTests
             Title = "NewTitle", Description = "NewDesc",
             DatePublished = _today, Rating = 4
         };
-        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(deletedBook.Id)).ReturnsAsync(deletedBook);
+        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(deletedBook.Id, It.IsAny<CancellationToken>())).ReturnsAsync(deletedBook);
 
         //Act
-        var result = await _bookService.UpdateBookAsync(editDto, deletedBook.Id);
+        var result = await _bookService.UpdateBookAsync(editDto, deletedBook.Id, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -334,10 +334,10 @@ public class BookServiceTests
             Title = "NewTitle", Description = "NewDesc",
             DatePublished = futureDate, Rating = 4
         };
-        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(existingBook.Id)).ReturnsAsync(existingBook);
+        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(existingBook.Id, It.IsAny<CancellationToken>())).ReturnsAsync(existingBook);
 
         //Act
-        var result = await _bookService.UpdateBookAsync(editDto, existingBook.Id);
+        var result = await _bookService.UpdateBookAsync(editDto, existingBook.Id, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -352,10 +352,10 @@ public class BookServiceTests
         //Arrange
         var author = new Author("Author");
         var existingBook = new Book("9780132350884", "Title", "Desc", author, _today, 3);
-        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(existingBook.Id)).ReturnsAsync(existingBook);
+        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(existingBook.Id, It.IsAny<CancellationToken>())).ReturnsAsync(existingBook);
 
         //Act
-        var result = await _bookService.UpdateBookRatingAsync(existingBook.Id, 4.5m);
+        var result = await _bookService.UpdateBookRatingAsync(existingBook.Id, 4.5m, CancellationToken.None);
 
         //Assert
         Assert.True(result.IsSuccess);
@@ -369,10 +369,10 @@ public class BookServiceTests
     {
         //Arrange
         var bookId = Guid.NewGuid();
-        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(bookId)).ReturnsAsync((Book?)null);
+        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(bookId, It.IsAny<CancellationToken>())).ReturnsAsync((Book?)null);
 
         //Act
-        var result = await _bookService.UpdateBookRatingAsync(bookId, 4.5m);
+        var result = await _bookService.UpdateBookRatingAsync(bookId, 4.5m, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -387,10 +387,10 @@ public class BookServiceTests
         var author = new Author("Author");
         var deletedBook = new Book("9780132350884", "Title", "Desc", author, _today, 3);
         deletedBook.DeleteBook();
-        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(deletedBook.Id)).ReturnsAsync(deletedBook);
+        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(deletedBook.Id, It.IsAny<CancellationToken>())).ReturnsAsync(deletedBook);
 
         //Act
-        var result = await _bookService.UpdateBookRatingAsync(deletedBook.Id, 4.5m);
+        var result = await _bookService.UpdateBookRatingAsync(deletedBook.Id, 4.5m, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -404,10 +404,10 @@ public class BookServiceTests
         //Arrange
         var author = new Author("Author");
         var existingBook = new Book("9780132350884", "Title", "Desc", author, _today, 3);
-        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(existingBook.Id)).ReturnsAsync(existingBook);
+        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(existingBook.Id, It.IsAny<CancellationToken>())).ReturnsAsync(existingBook);
 
         //Act
-        var result = await _bookService.DeleteBookAsync(existingBook.Id);
+        var result = await _bookService.DeleteBookAsync(existingBook.Id, CancellationToken.None);
 
         //Assert
         Assert.True(result.IsSuccess);
@@ -421,10 +421,10 @@ public class BookServiceTests
     {
         //Arrange
         var bookId = Guid.NewGuid();
-        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(bookId)).ReturnsAsync((Book?)null);
+        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(bookId, It.IsAny<CancellationToken>())).ReturnsAsync((Book?)null);
 
         //Act
-        var result = await _bookService.DeleteBookAsync(bookId);
+        var result = await _bookService.DeleteBookAsync(bookId, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -439,10 +439,10 @@ public class BookServiceTests
         var author = new Author("Author");
         var deletedBook = new Book("9780132350884", "Title", "Desc", author, _today, 3);
         deletedBook.DeleteBook();
-        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(deletedBook.Id)).ReturnsAsync(deletedBook);
+        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(deletedBook.Id, It.IsAny<CancellationToken>())).ReturnsAsync(deletedBook);
 
         //Act
-        var result = await _bookService.DeleteBookAsync(deletedBook.Id);
+        var result = await _bookService.DeleteBookAsync(deletedBook.Id, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);

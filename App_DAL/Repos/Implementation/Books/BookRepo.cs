@@ -14,30 +14,30 @@ public class BookRepo : IBookRepo
     {
         _dbContext = dbContext;
     }
-    public async Task<(IReadOnlyList<Book> items, int totalCount)> GetAllBooksAsync(BookQuery bookQuery)
+    public async Task<(IReadOnlyList<Book> items, int totalCount)> GetAllBooksAsync(BookQuery bookQuery, CancellationToken cancellationToken)
     {
         var query = _dbContext.Books.AsNoTracking().AsQueryable().Where(b => b.IsDeleted == false).ApplyQueryFilters(bookQuery).Include(b => b.Author);
         
-        int totalCount = await query.CountAsync();
+        int totalCount = await query.CountAsync(cancellationToken);
 
         var paginatedQuery = query.OrderBy(x => x.Id).Skip((bookQuery.PageNumber - 1) * bookQuery.PageSize)
             .Take(bookQuery.PageSize);
         
         var sql = paginatedQuery.ToQueryString();
         
-        IReadOnlyList<Book> result = await paginatedQuery.ToListAsync();
+        IReadOnlyList<Book> result = await paginatedQuery.ToListAsync(cancellationToken);
         return (result, totalCount);
     }
 
-    public async Task<Book?> GetBookByIdAsync(Guid id)
+    public async Task<Book?> GetBookByIdAsync(Guid id, CancellationToken cancellationToken)
     {
-        var book = await _dbContext.Books.Include(b => b.Author).FirstOrDefaultAsync(b => b.Id == id && b.IsDeleted == false);
+        var book = await _dbContext.Books.Include(b => b.Author).FirstOrDefaultAsync(b => b.Id == id && b.IsDeleted == false, cancellationToken);
         return book;
     }
     
-    public async Task<Book?> GetBookByIsbnAsync(string isbn)
+    public async Task<Book?> GetBookByIsbnAsync(string isbn, CancellationToken cancellationToken)
     {
-        var book = await _dbContext.Books.Include(b => b.Author).FirstOrDefaultAsync(b => b.Isbn == isbn && b.IsDeleted == false);
+        var book = await _dbContext.Books.Include(b => b.Author).FirstOrDefaultAsync(b => b.Isbn == isbn && b.IsDeleted == false, cancellationToken);
         return book;
     }
 
@@ -52,8 +52,8 @@ public class BookRepo : IBookRepo
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task<bool> HasActiveBookByAuthorAsync(Guid authorId)
+    public async Task<bool> HasActiveBookByAuthorAsync(Guid authorId, CancellationToken cancellationToken)
     {
-        return await _dbContext.Books.AnyAsync(b => b.AuthorId == authorId &&  b.IsDeleted == false);
+        return await _dbContext.Books.AnyAsync(b => b.AuthorId == authorId &&  b.IsDeleted == false, cancellationToken);
     }
 }

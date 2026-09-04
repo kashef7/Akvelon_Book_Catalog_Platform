@@ -7,9 +7,9 @@ namespace App_BLL.Services.Abstraction.Users;
 
 public interface IUserService
 {
-    Task<Result<PagedResult<UserGetDto>>> GetAllUsersAsync(UserQueryParams query);
-    Task<Result<UserGetDto>> GetUserAsync(Guid id);
-    Task<Result<Guid>> AddUserAsync(UserCreateDto user);
-    Task<Result> UpdateUserAsync(UserEditDto user, Guid editedUserId);
-    Task<Result> DeleteUserAsync(Guid id);
+    Task<Result<PagedResult<UserGetDto>>> GetAllUsersAsync(UserQueryParams query, CancellationToken cancellationToken);
+    Task<Result<UserGetDto>> GetUserAsync(Guid id, CancellationToken cancellationToken);
+    Task<Result<Guid>> AddUserAsync(UserCreateDto user, CancellationToken cancellationToken);
+    Task<Result> UpdateUserAsync(UserEditDto user, Guid editedUserId, CancellationToken cancellationToken);
+    Task<Result> DeleteUserAsync(Guid id, CancellationToken cancellationToken);
 }

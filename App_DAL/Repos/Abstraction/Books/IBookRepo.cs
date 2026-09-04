@@ -5,10 +5,10 @@ namespace App_DAL.Repos.Abstraction.Books;
 
 public interface IBookRepo
 {
-    Task<(IReadOnlyList<Book> items ,int totalCount)> GetAllBooksAsync(BookQuery bookQuery);
-    Task<Book?> GetBookByIdAsync(Guid id);
-    Task<Book?> GetBookByIsbnAsync(string isbn);
+    Task<(IReadOnlyList<Book> items ,int totalCount)> GetAllBooksAsync(BookQuery bookQuery, CancellationToken cancellationToken);
+    Task<Book?> GetBookByIdAsync(Guid id, CancellationToken cancellationToken);
+    Task<Book?> GetBookByIsbnAsync(string isbn, CancellationToken cancellationToken);
     Task AddBookAsync(Book book);
     Task SaveChangesAsync();
-    Task<bool> HasActiveBookByAuthorAsync(Guid authorId);
+    Task<bool> HasActiveBookByAuthorAsync(Guid authorId, CancellationToken cancellationToken);
 }

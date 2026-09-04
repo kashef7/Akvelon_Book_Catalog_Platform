@@ -27,11 +27,11 @@ public class UserService : IUserService
         _logger = logger;
     }
     
-    public async Task<Result<PagedResult<UserGetDto>>> GetAllUsersAsync(UserQueryParams query)
+    public async Task<Result<PagedResult<UserGetDto>>> GetAllUsersAsync(UserQueryParams query, CancellationToken cancellationToken)
     {
         var userQuery = _mapper.Map<UserQuery>(query);
         
-        var (users, totalCount) = await _userRepo.GetAllUsersAsync(userQuery);
+        var (users, totalCount) = await _userRepo.GetAllUsersAsync(userQuery, cancellationToken);
         var dtos = _mapper.Map<IReadOnlyList<UserGetDto>>(users);
         
         return Result<PagedResult<UserGetDto>>.Success(new PagedResult<UserGetDto>()
@@ -43,9 +43,9 @@ public class UserService : IUserService
         });
     }
 
-    public async Task<Result<UserGetDto>> GetUserAsync(Guid id)
+    public async Task<Result<UserGetDto>> GetUserAsync(Guid id, CancellationToken cancellationToken)
     {
-        var user = await _userRepo.GetUserByIdAsync(id);
+        var user = await _userRepo.GetUserByIdAsync(id, cancellationToken);
         if (user == null)
         {
             _logger.LogWarning("User {UserId} Not Found", id);
@@ -54,16 +54,18 @@ public class UserService : IUserService
         return Result<UserGetDto>.Success(_mapper.Map<UserGetDto>(user));
     }
 
-    public async Task<Result<Guid>> AddUserAsync(UserCreateDto user)
+    public async Task<Result<Guid>> AddUserAsync(UserCreateDto user, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var newUser = new User(user.Name);
         await _userRepo.AddUserAsync(newUser);
         return Result<Guid>.Success(newUser.Id);
     }
 
-    public async Task<Result> UpdateUserAsync(UserEditDto user, Guid editedUserId)
+    public async Task<Result> UpdateUserAsync(UserEditDto user, Guid editedUserId, CancellationToken cancellationToken)
     {
-        var editedUser = await _userRepo.GetUserByIdAsync(editedUserId);
+        cancellationToken.ThrowIfCancellationRequested();
+        var editedUser = await _userRepo.GetUserByIdAsync(editedUserId, cancellationToken);
         if (editedUser == null)
         {
             _logger.LogWarning("Updating User Failed, User {UserId} Not Found", editedUserId);
@@ -79,9 +81,10 @@ public class UserService : IUserService
         return Result.Success("User Updated");
     }
 
-    public async Task<Result> DeleteUserAsync(Guid id)
+    public async Task<Result> DeleteUserAsync(Guid id, CancellationToken cancellationToken)
     {
-        var deletedUser = await _userRepo.GetUserByIdAsync(id);
+        cancellationToken.ThrowIfCancellationRequested();
+        var deletedUser = await _userRepo.GetUserByIdAsync(id, cancellationToken);
         if (deletedUser == null)
         {
             _logger.LogWarning("Deleting User Failed, User {UserId} Not Found", id);
@@ -93,7 +96,7 @@ public class UserService : IUserService
             return Result.Failed(ErrorType.NotFound, "User Deleted");
         }
 
-        if (await _loanRepo.HasActiveLoanByUserAsync(id))
+        if (await _loanRepo.HasActiveLoanByUserAsync(id, cancellationToken))
         {
             _logger.LogWarning("Deleting User Failed, User {UserId} has active Loans", id);
             return Result.Failed(ErrorType.Conflict, "User Has Active Loan");

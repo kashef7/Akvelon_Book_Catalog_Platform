@@ -16,19 +16,19 @@ public class UserRepo : IUserRepo
         _dbContext = dbContext;
     }
     
-    public async Task<(IReadOnlyList<User> items, int TotalCount)> GetAllUsersAsync(UserQuery userQuery)
+    public async Task<(IReadOnlyList<User> items, int TotalCount)> GetAllUsersAsync(UserQuery userQuery, CancellationToken cancellationToken)
     {
         var query = _dbContext.Users.AsNoTracking().AsQueryable().Where(u => !u.IsDeleted).ApplyQueryFilters(userQuery);
         
-        var totalCount = await query.CountAsync();
+        var totalCount = await query.CountAsync(cancellationToken);
         
-        IReadOnlyList<User> result = await query.OrderBy(x => x.Id).Skip((userQuery.PageNumber - 1) * userQuery.PageSize).Take(userQuery.PageSize).ToListAsync();
+        IReadOnlyList<User> result = await query.OrderBy(x => x.Id).Skip((userQuery.PageNumber - 1) * userQuery.PageSize).Take(userQuery.PageSize).ToListAsync(cancellationToken);
         return (result, totalCount);
     }
 
-    public async Task<User?> GetUserByIdAsync(Guid id)
+    public async Task<User?> GetUserByIdAsync(Guid id, CancellationToken cancellationToken)
     {
-        var query = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == id && !u.IsDeleted);
+        var query = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == id && !u.IsDeleted, cancellationToken);
         return query;
     }
 
