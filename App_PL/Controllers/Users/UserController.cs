@@ -19,39 +19,39 @@ public class UserController : ControllerBase
     }
     
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] UserQueryParams query)
+    public async Task<IActionResult> GetAll([FromQuery] UserQueryParams query, CancellationToken cancellationToken)
     {
-        var result = await _userService.GetAllUsersAsync(query);
+        var result = await _userService.GetAllUsersAsync(query, cancellationToken);
         return result.IsSuccess ? Ok(result.Data) : HandleFailure(result);
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var result = await _userService.GetUserAsync(id);
+        var result = await _userService.GetUserAsync(id, cancellationToken);
         return result.IsSuccess ? Ok(result.Data) : HandleFailure(result);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(UserCreateDto dto)
+    public async Task<IActionResult> Create(UserCreateDto dto, CancellationToken cancellationToken)
     {
-        var result = await _userService.AddUserAsync(dto);
+        var result = await _userService.AddUserAsync(dto, cancellationToken);
         return result.IsSuccess
             ? CreatedAtAction(nameof(GetById), new { id = result.Data }, new { id = result.Data })
             : HandleFailure(result);
     }
 
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, UserEditDto dto)
+    public async Task<IActionResult> Update(Guid id, UserEditDto dto, CancellationToken cancellationToken)
     {
-        var result = await _userService.UpdateUserAsync(dto, id);
+        var result = await _userService.UpdateUserAsync(dto, id, cancellationToken);
         return result.IsSuccess ? NoContent() : HandleFailure(result);
     }
     
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var result = await _userService.DeleteUserAsync(id);
+        var result = await _userService.DeleteUserAsync(id, cancellationToken);
         return result.IsSuccess ? NoContent() : HandleFailure(result);
     }
     

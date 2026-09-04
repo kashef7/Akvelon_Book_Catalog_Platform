@@ -17,6 +17,7 @@
     build:
       context: .
       dockerfile: App_PL/Dockerfile
+    stop_grace_period: 25s
     ports:
       - "8080:8080"
     environment:

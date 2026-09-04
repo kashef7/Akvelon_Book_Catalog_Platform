@@ -19,6 +19,7 @@ using App_DAL.Repos.Implementation.Users;
 using App_PL.ConfigValidators.Database;
 using App_PL.Exceptions;
 using App_PL.Middlewares.loggingMiddleware;
+using App_PL.Services.LoggingServices;
 using DotNetEnv;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
@@ -58,12 +59,18 @@ try
         .Enrich.WithThreadId()
         .Enrich.WithProperty("Application", "BookCatalogPlatform"));
 
+    builder.Services.AddSingleton<ShutdownLoggingService>();
+    
+    builder.Services.Configure<HostOptions>(options =>
+    {
+        options.ShutdownTimeout = TimeSpan.FromSeconds(20);
+    });
 
     builder.Services.AddSingleton<IValidateOptions<DatabaseOptions>, DatabaseOptionsValidator>();
     builder.Services.AddOptions<DatabaseOptions>()
         .Bind(builder.Configuration.GetSection(DatabaseOptions.SectionName))
         .ValidateOnStart();
-
+    
     builder.Services.AddOpenApi();
     builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
     builder.Services.AddProblemDetails();
@@ -97,7 +104,9 @@ try
     builder.Services.AddControllers();
 
     var app = builder.Build();
-
+    
+    app.Services.GetRequiredService<ShutdownLoggingService>();
+    
     if (app.Environment.IsDevelopment())
     {
         app.MapOpenApi();
@@ -115,6 +124,8 @@ try
     app.UseRouting();
     app.UseSerilogRequestLogging();
     app.UseAuthorization();
+    
+    //app.UseMiddleware<ShutdownAwareMiddleware>();
 
     app.MapHealthChecks("/health/live", new HealthCheckOptions
     {

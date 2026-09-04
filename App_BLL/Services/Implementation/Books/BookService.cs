@@ -28,12 +28,11 @@ public class BookService : IBookService
         _logger = logger;
         
     }
-    public async Task<Result<PagedResult<BookGetDto>>> GetAllBooksAsync(BookQueryParams  query)
+    public async Task<Result<PagedResult<BookGetDto>>> GetAllBooksAsync(BookQueryParams query, CancellationToken cancellationToken)
     {
-        
         var bookQuery = _mapper.Map<BookQuery>(query);
 
-        var (books, totalCount) = await _bookRepo.GetAllBooksAsync(bookQuery);
+        var (books, totalCount) = await _bookRepo.GetAllBooksAsync(bookQuery, cancellationToken);
         var dtos = _mapper.Map<IReadOnlyList<BookGetDto>>(books);
 
         return Result<PagedResult<BookGetDto>>.Success(new PagedResult<BookGetDto>
@@ -46,9 +45,9 @@ public class BookService : IBookService
         
     }
 
-    public async Task<Result<BookGetDto>> GetBookAsync(Guid id)
+    public async Task<Result<BookGetDto>> GetBookAsync(Guid id, CancellationToken cancellationToken)
     {
-        var book = await _bookRepo.GetBookByIdAsync(id);
+        var book = await _bookRepo.GetBookByIdAsync(id, cancellationToken);
         if (book is null)
         {
             _logger.LogWarning("Book {BookId} Not Found", id);
@@ -58,9 +57,9 @@ public class BookService : IBookService
         return Result<BookGetDto>.Success(_mapper.Map<BookGetDto>(book));
     }
 
-    public async Task<Result<BookGetDto>> GetBookByIsbnAsync(string isbn)
+    public async Task<Result<BookGetDto>> GetBookByIsbnAsync(string isbn, CancellationToken cancellationToken)
     {
-        var book = await _bookRepo.GetBookByIsbnAsync(isbn);
+        var book = await _bookRepo.GetBookByIsbnAsync(isbn, cancellationToken);
         if (book is null)
         {
             _logger.LogWarning("Book with Isbn:{BookIsbn} Not Found", isbn);
@@ -70,21 +69,22 @@ public class BookService : IBookService
         return Result<BookGetDto>.Success(_mapper.Map<BookGetDto>(book));
     }
 
-    public async Task<Result<Guid>> AddBookAsync(BookCreateDto book)
+    public async Task<Result<Guid>> AddBookAsync(BookCreateDto book, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         if (book.DatePublished > today)
         {
             _logger.LogWarning("Creating Book Failed : Date Published {DatePublished} Can't be in the future", book.DatePublished);
             return Result<Guid>.Failed(ErrorType.BadRequest, "Book Date Published Can't be in the future");
         }
-        var author = await _authorRepo.GetAuthorByIdAsync(book.AuthorId);
+        var author = await _authorRepo.GetAuthorByIdAsync(book.AuthorId, cancellationToken);
         if (author == null)
         {
             _logger.LogWarning("Creating Book Failed : Author {AuthorId} Not Found", book.AuthorId);
             return Result<Guid>.Failed(ErrorType.NotFound, "Author Not Found");
         }
-        var existingBook = await _bookRepo.GetBookByIsbnAsync(book.Isbn);
+        var existingBook = await _bookRepo.GetBookByIsbnAsync(book.Isbn, cancellationToken);
         if (existingBook != null)
         {
             _logger.LogWarning("Creating Book Failed : Book with Isbn:{BookIsbn} already exists", book.Isbn);
@@ -97,9 +97,10 @@ public class BookService : IBookService
         return Result<Guid>.Success(newBook.Id);
     }
 
-    public async Task<Result> UpdateBookAsync(BookEditDto book, Guid editedBookId)
+    public async Task<Result> UpdateBookAsync(BookEditDto book, Guid editedBookId, CancellationToken cancellationToken)
     {
-        var bookToUpdate = await _bookRepo.GetBookByIdAsync(editedBookId);
+        cancellationToken.ThrowIfCancellationRequested();
+        var bookToUpdate = await _bookRepo.GetBookByIdAsync(editedBookId, cancellationToken);
         if (bookToUpdate == null)
         {
             _logger.LogWarning("Update Book Failed : Book {BookId} Not Found", editedBookId);
@@ -121,9 +122,10 @@ public class BookService : IBookService
         return Result.Success("Book Updated");
     }
 
-    public async Task<Result> UpdateBookRatingAsync(Guid id, decimal rating)
+    public async Task<Result> UpdateBookRatingAsync(Guid id, decimal rating, CancellationToken cancellationToken)
     {
-        var bookToUpdate = await _bookRepo.GetBookByIdAsync(id);
+        cancellationToken.ThrowIfCancellationRequested();
+        var bookToUpdate = await _bookRepo.GetBookByIdAsync(id, cancellationToken);
         if (bookToUpdate == null)
         {
             _logger.LogWarning("Update Book Rating Failed : Book {BookId} Not Found", id);
@@ -139,9 +141,10 @@ public class BookService : IBookService
         return Result.Success("Book Ratings Updated");
     }
 
-    public async Task<Result> DeleteBookAsync(Guid id)
+    public async Task<Result> DeleteBookAsync(Guid id, CancellationToken cancellationToken)
     {
-        var bookToDelete = await _bookRepo.GetBookByIdAsync(id);
+        cancellationToken.ThrowIfCancellationRequested();
+        var bookToDelete = await _bookRepo.GetBookByIdAsync(id, cancellationToken);
         if (bookToDelete == null)
         {
             _logger.LogWarning("Deleting Book Failed : Book {BookId} Not Found", id);
