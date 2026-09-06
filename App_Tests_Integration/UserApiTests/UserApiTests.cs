@@ -22,7 +22,7 @@ public class UserApiTests : BaseIntegrationTest
         //Arrange
 
         //Act
-        var response = await Client.GetAsync("api/user");
+        var response = await Client.GetAsync("api/users");
 
         //Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -39,7 +39,7 @@ public class UserApiTests : BaseIntegrationTest
         await seeder.SeedManyAsync(count);
 
         //Act
-        var response = await Client.GetAsync("api/user");
+        var response = await Client.GetAsync("api/users");
 
         //Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -60,7 +60,7 @@ public class UserApiTests : BaseIntegrationTest
         await seeder.SeedOneAsync(o => o.Name = "Bob Jones");
 
         //Act
-        var response = await Client.GetAsync("api/user?Name=Alice");
+        var response = await Client.GetAsync("api/users?Name=Alice");
 
         //Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -80,7 +80,7 @@ public class UserApiTests : BaseIntegrationTest
         var user = await seeder.SeedOneAsync();
 
         //Act
-        var response = await Client.GetAsync($"api/user/{user.Id}");
+        var response = await Client.GetAsync($"api/users/{user.Id}");
 
         //Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -96,7 +96,7 @@ public class UserApiTests : BaseIntegrationTest
         var id = Guid.CreateVersion7();
 
         //Act
-        var response = await Client.GetAsync($"api/user/{id}");
+        var response = await Client.GetAsync($"api/users/{id}");
 
         //Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -109,7 +109,7 @@ public class UserApiTests : BaseIntegrationTest
         var dto = new UserCreateDto { Name = "Jane Doe" };
 
         //Act
-        var response = await Client.PostAsJsonAsync("api/user", dto);
+        var response = await Client.PostAsJsonAsync("api/users", dto);
 
         //Assert
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
@@ -126,7 +126,7 @@ public class UserApiTests : BaseIntegrationTest
         var dto = new UserCreateDto { Name = string.Empty };
 
         //Act
-        var response = await Client.PostAsJsonAsync("api/user", dto);
+        var response = await Client.PostAsJsonAsync("api/users", dto);
 
         //Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -139,7 +139,7 @@ public class UserApiTests : BaseIntegrationTest
         var dto = new UserCreateDto { Name = new string('A', 65) };
 
         //Act
-        var response = await Client.PostAsJsonAsync("api/user", dto);
+        var response = await Client.PostAsJsonAsync("api/users", dto);
 
         //Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -156,7 +156,7 @@ public class UserApiTests : BaseIntegrationTest
         var dto = new UserEditDto { Name = "Updated Name" };
 
         //Act
-        var response = await Client.PutAsJsonAsync($"api/user/{user.Id}", dto);
+        var response = await Client.PutAsJsonAsync($"api/users/{user.Id}", dto);
 
         //Assert
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
@@ -175,7 +175,7 @@ public class UserApiTests : BaseIntegrationTest
         var dto = new UserEditDto { Name = "Updated Name" };
 
         //Act
-        var response = await Client.PutAsJsonAsync($"api/user/{id}", dto);
+        var response = await Client.PutAsJsonAsync($"api/users/{id}", dto);
 
         //Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -192,7 +192,7 @@ public class UserApiTests : BaseIntegrationTest
         var dto = new UserEditDto { Name = "Updated Name" };
 
         //Act
-        var response = await Client.PutAsJsonAsync($"api/user/{user.Id}", dto);
+        var response = await Client.PutAsJsonAsync($"api/users/{user.Id}", dto);
 
         //Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -208,7 +208,7 @@ public class UserApiTests : BaseIntegrationTest
         var user = await seeder.SeedOneAsync();
 
         //Act
-        var response = await Client.DeleteAsync($"api/user/{user.Id}");
+        var response = await Client.DeleteAsync($"api/users/{user.Id}");
 
         //Assert
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
@@ -221,7 +221,7 @@ public class UserApiTests : BaseIntegrationTest
         var id = Guid.CreateVersion7();
 
         //Act
-        var response = await Client.DeleteAsync($"api/user/{id}");
+        var response = await Client.DeleteAsync($"api/users/{id}");
 
         //Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -237,7 +237,7 @@ public class UserApiTests : BaseIntegrationTest
         var user = await seeder.SeedOneAsync(o => o.IsDeleted = true);
 
         //Act
-        var response = await Client.DeleteAsync($"api/user/{user.Id}");
+        var response = await Client.DeleteAsync($"api/users/{user.Id}");
 
         //Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -255,7 +255,7 @@ public class UserApiTests : BaseIntegrationTest
         await loanSeeder.SeedOneAsync(o => o.User = user);
 
         //Act
-        var response = await Client.DeleteAsync($"api/user/{user.Id}");
+        var response = await Client.DeleteAsync($"api/users/{user.Id}");
 
         //Assert
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);

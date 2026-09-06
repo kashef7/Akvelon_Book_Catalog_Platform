@@ -22,7 +22,7 @@ public class AuthorApiTests : BaseIntegrationTest
         //Arrange
 
         //Act
-        var response = await Client.GetAsync("api/author");
+        var response = await Client.GetAsync("api/authors");
 
         //Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -39,7 +39,7 @@ public class AuthorApiTests : BaseIntegrationTest
         await seeder.SeedManyAsync(count);
 
         //Act
-        var response = await Client.GetAsync("api/author");
+        var response = await Client.GetAsync("api/authors");
 
         //Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -60,7 +60,7 @@ public class AuthorApiTests : BaseIntegrationTest
         await seeder.SeedOneAsync(o => o.Name = "Aldous Huxley");
 
         //Act
-        var response = await Client.GetAsync("api/author?Name=George");
+        var response = await Client.GetAsync("api/authors?Name=George");
 
         //Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -80,7 +80,7 @@ public class AuthorApiTests : BaseIntegrationTest
         var author = await seeder.SeedOneAsync();
 
         //Act
-        var response = await Client.GetAsync($"api/author/{author.Id}");
+        var response = await Client.GetAsync($"api/authors/{author.Id}");
 
         //Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -96,7 +96,7 @@ public class AuthorApiTests : BaseIntegrationTest
         var id = Guid.CreateVersion7();
 
         //Act
-        var response = await Client.GetAsync($"api/author/{id}");
+        var response = await Client.GetAsync($"api/authors/{id}");
 
         //Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -109,7 +109,7 @@ public class AuthorApiTests : BaseIntegrationTest
         var dto = new AuthorCreateDto { Name = "Arthur Conan Doyle" };
 
         //Act
-        var response = await Client.PostAsJsonAsync("api/author", dto);
+        var response = await Client.PostAsJsonAsync("api/authors", dto);
 
         //Assert
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
@@ -130,7 +130,7 @@ public class AuthorApiTests : BaseIntegrationTest
         var dto = new AuthorCreateDto { Name = "Duplicate Author" };
 
         //Act
-        var response = await Client.PostAsJsonAsync("api/author", dto);
+        var response = await Client.PostAsJsonAsync("api/authors", dto);
 
         //Assert
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
@@ -143,7 +143,7 @@ public class AuthorApiTests : BaseIntegrationTest
         var dto = new AuthorCreateDto { Name = string.Empty };
 
         //Act
-        var response = await Client.PostAsJsonAsync("api/author", dto);
+        var response = await Client.PostAsJsonAsync("api/authors", dto);
 
         //Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -156,7 +156,7 @@ public class AuthorApiTests : BaseIntegrationTest
         var dto = new AuthorCreateDto { Name = new string('A', 65) };
 
         //Act
-        var response = await Client.PostAsJsonAsync("api/author", dto);
+        var response = await Client.PostAsJsonAsync("api/authors", dto);
 
         //Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -173,7 +173,7 @@ public class AuthorApiTests : BaseIntegrationTest
         var dto = new AuthorEditDto { Name = "Updated Name" };
 
         //Act
-        var response = await Client.PutAsJsonAsync($"api/author/{author.Id}", dto);
+        var response = await Client.PutAsJsonAsync($"api/authors/{author.Id}", dto);
 
         //Assert
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
@@ -192,7 +192,7 @@ public class AuthorApiTests : BaseIntegrationTest
         var dto = new AuthorEditDto { Name = "Updated Name" };
 
         //Act
-        var response = await Client.PutAsJsonAsync($"api/author/{id}", dto);
+        var response = await Client.PutAsJsonAsync($"api/authors/{id}", dto);
 
         //Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -209,7 +209,7 @@ public class AuthorApiTests : BaseIntegrationTest
         var dto = new AuthorEditDto { Name = "Updated Name" };
 
         //Act
-        var response = await Client.PutAsJsonAsync($"api/author/{author.Id}", dto);
+        var response = await Client.PutAsJsonAsync($"api/authors/{author.Id}", dto);
 
         //Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -225,7 +225,7 @@ public class AuthorApiTests : BaseIntegrationTest
         var author = await seeder.SeedOneAsync();
 
         //Act
-        var response = await Client.DeleteAsync($"api/author/{author.Id}");
+        var response = await Client.DeleteAsync($"api/authors/{author.Id}");
 
         //Assert
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
@@ -238,7 +238,7 @@ public class AuthorApiTests : BaseIntegrationTest
         var id = Guid.CreateVersion7();
 
         //Act
-        var response = await Client.DeleteAsync($"api/author/{id}");
+        var response = await Client.DeleteAsync($"api/authors/{id}");
 
         //Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -254,7 +254,7 @@ public class AuthorApiTests : BaseIntegrationTest
         var author = await seeder.SeedOneAsync(o => o.IsDeleted = true);
 
         //Act
-        var response = await Client.DeleteAsync($"api/author/{author.Id}");
+        var response = await Client.DeleteAsync($"api/authors/{author.Id}");
 
         //Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -272,7 +272,7 @@ public class AuthorApiTests : BaseIntegrationTest
         await bookSeeder.SeedOneAsync(o => o.Author = author);
 
         //Act
-        var response = await Client.DeleteAsync($"api/author/{author.Id}");
+        var response = await Client.DeleteAsync($"api/authors/{author.Id}");
 
         //Assert
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);

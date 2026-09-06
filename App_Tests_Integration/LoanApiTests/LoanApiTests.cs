@@ -22,7 +22,7 @@ public class LoanApiTests : BaseIntegrationTest
         //Arrange
 
         //Act
-        var response = await Client.GetAsync("api/loan");
+        var response = await Client.GetAsync("api/loans");
 
         //Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -39,7 +39,7 @@ public class LoanApiTests : BaseIntegrationTest
         await seeder.SeedManyAsync(count);
 
         //Act
-        var response = await Client.GetAsync("api/loan");
+        var response = await Client.GetAsync("api/loans");
 
         //Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -59,7 +59,7 @@ public class LoanApiTests : BaseIntegrationTest
         var targetBookId = loans[0].BookId;
 
         //Act
-        var response = await Client.GetAsync($"api/loan?BookId={targetBookId}");
+        var response = await Client.GetAsync($"api/loans?BookId={targetBookId}");
 
         //Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -83,7 +83,7 @@ public class LoanApiTests : BaseIntegrationTest
         await loanSeeder.SeedOneAsync(o => o.User = otherUser);
 
         //Act
-        var response = await Client.GetAsync($"api/loan?UserId={targetUser.Id}");
+        var response = await Client.GetAsync($"api/loans?UserId={targetUser.Id}");
 
         //Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -104,7 +104,7 @@ public class LoanApiTests : BaseIntegrationTest
         await seeder.SeedOneAsync(o => o.MarkAsReturned = false);
 
         //Act
-        var response = await Client.GetAsync("api/loan?IsReturned=true");
+        var response = await Client.GetAsync("api/loans?IsReturned=true");
 
         //Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -125,7 +125,7 @@ public class LoanApiTests : BaseIntegrationTest
         await seeder.SeedOneAsync(o => o.MarkAsReturned = false);
 
         //Act
-        var response = await Client.GetAsync("api/loan?IsReturned=false");
+        var response = await Client.GetAsync("api/loans?IsReturned=false");
 
         //Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -145,7 +145,7 @@ public class LoanApiTests : BaseIntegrationTest
         var loan = await seeder.SeedOneAsync();
 
         //Act
-        var response = await Client.GetAsync($"api/loan/{loan.Id}");
+        var response = await Client.GetAsync($"api/loans/{loan.Id}");
 
         //Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -161,7 +161,7 @@ public class LoanApiTests : BaseIntegrationTest
         var id = Guid.CreateVersion7();
 
         //Act
-        var response = await Client.GetAsync($"api/loan/{id}");
+        var response = await Client.GetAsync($"api/loans/{id}");
 
         //Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -183,7 +183,7 @@ public class LoanApiTests : BaseIntegrationTest
         };
 
         //Act
-        var response = await Client.PostAsJsonAsync("api/loan", dto);
+        var response = await Client.PostAsJsonAsync("api/loans", dto);
 
         //Assert
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
@@ -209,7 +209,7 @@ public class LoanApiTests : BaseIntegrationTest
         };
 
         //Act
-        var response = await Client.PostAsJsonAsync("api/loan", dto);
+        var response = await Client.PostAsJsonAsync("api/loans", dto);
 
         //Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -230,7 +230,7 @@ public class LoanApiTests : BaseIntegrationTest
         };
 
         //Act
-        var response = await Client.PostAsJsonAsync("api/loan", dto);
+        var response = await Client.PostAsJsonAsync("api/loans", dto);
 
         //Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -252,7 +252,7 @@ public class LoanApiTests : BaseIntegrationTest
         };
 
         //Act
-        var response = await Client.PostAsJsonAsync("api/loan", dto);
+        var response = await Client.PostAsJsonAsync("api/loans", dto);
 
         //Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -282,7 +282,7 @@ public class LoanApiTests : BaseIntegrationTest
         };
 
         //Act
-        var response = await Client.PostAsJsonAsync("api/loan", dto);
+        var response = await Client.PostAsJsonAsync("api/loans", dto);
 
         //Assert
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
@@ -312,8 +312,8 @@ public class LoanApiTests : BaseIntegrationTest
         };
 
         //Act
-        var task1 = Client.PostAsJsonAsync("api/loan", dto1);
-        var task2 = Client.PostAsJsonAsync("api/loan", dto2);
+        var task1 = Client.PostAsJsonAsync("api/loans", dto1);
+        var task2 = Client.PostAsJsonAsync("api/loans", dto2);
         var responses = await Task.WhenAll(task1, task2);
 
         //Assert
@@ -335,7 +335,7 @@ public class LoanApiTests : BaseIntegrationTest
         var loan = await new LoanSeeder(db).SeedOneAsync(o => o.MarkAsReturned = false);
 
         //Act
-        var response = await Client.PatchAsync($"api/loan/returnLoan/{loan.Id}", null);
+        var response = await Client.PatchAsync($"api/loans/returnLoan/{loan.Id}", null);
 
         //Assert
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
@@ -353,7 +353,7 @@ public class LoanApiTests : BaseIntegrationTest
         var id = Guid.CreateVersion7();
 
         //Act
-        var response = await Client.PatchAsync($"api/loan/returnLoan/{id}", null);
+        var response = await Client.PatchAsync($"api/loans/returnLoan/{id}", null);
 
         //Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -368,7 +368,7 @@ public class LoanApiTests : BaseIntegrationTest
         var loan = await new LoanSeeder(db).SeedOneAsync(o => o.MarkAsReturned = true);
 
         //Act
-        var response = await Client.PatchAsync($"api/loan/returnLoan/{loan.Id}", null);
+        var response = await Client.PatchAsync($"api/loans/returnLoan/{loan.Id}", null);
 
         //Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -382,7 +382,7 @@ public class LoanApiTests : BaseIntegrationTest
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var loan = await new LoanSeeder(db).SeedOneAsync(o => o.MarkAsReturned = false);
         var newUser = await new UserSeeder(db).SeedOneAsync(o => o.Name = "Another User");
-        var returnResponse = await Client.PatchAsync($"api/loan/returnLoan/{loan.Id}", null);
+        var returnResponse = await Client.PatchAsync($"api/loans/returnLoan/{loan.Id}", null);
         Assert.Equal(HttpStatusCode.NoContent, returnResponse.StatusCode);
 
         var newLoanDto = new LoanCreateDto
@@ -393,7 +393,7 @@ public class LoanApiTests : BaseIntegrationTest
         };
 
         //Act
-        var response = await Client.PostAsJsonAsync("api/loan", newLoanDto);
+        var response = await Client.PostAsJsonAsync("api/loans", newLoanDto);
 
         //Assert
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
