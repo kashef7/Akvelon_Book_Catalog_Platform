@@ -78,7 +78,15 @@ try
     builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
     {
         var dbOptions = serviceProvider.GetRequiredService<IOptions<DatabaseOptions>>().Value;
-        options.UseSqlServer(dbOptions.DefaultConnection);
+        options.UseSqlServer(dbOptions.DefaultConnection , sqlOptions =>
+        {
+            sqlOptions.EnableRetryOnFailure
+            (
+                maxRetryCount: 4,
+                maxRetryDelay: TimeSpan.FromSeconds(10),
+                errorNumbersToAdd: null
+            );
+        });
     });
 
     builder.Services.AddScoped<IBookRepo, BookRepo>();
@@ -125,7 +133,6 @@ try
     app.UseSerilogRequestLogging();
     app.UseAuthorization();
     
-    //app.UseMiddleware<ShutdownAwareMiddleware>();
 
     app.MapHealthChecks("/health/live", new HealthCheckOptions
     {
