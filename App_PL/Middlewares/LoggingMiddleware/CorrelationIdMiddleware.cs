@@ -1,6 +1,6 @@
-﻿using Serilog.Context;
+using Serilog.Context;
 
-namespace App_PL.Middlewares.loggingMiddleware;
+namespace App_PL.Middlewares.LoggingMiddleware;
 
 public class CorrelationIdMiddleware
 {

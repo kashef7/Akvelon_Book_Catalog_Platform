@@ -18,7 +18,7 @@ using App_DAL.Repos.Implementation.Loans;
 using App_DAL.Repos.Implementation.Users;
 using App_PL.ConfigValidators.Database;
 using App_PL.Exceptions;
-using App_PL.Middlewares.loggingMiddleware;
+using App_PL.Middlewares.LoggingMiddleware;
 using App_PL.Services.LoggingServices;
 using DotNetEnv;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;

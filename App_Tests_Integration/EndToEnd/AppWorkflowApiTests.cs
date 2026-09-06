@@ -25,8 +25,8 @@ public class AppWorkflowApiTests : BaseIntegrationTest
         var userDto = new UserCreateDto { Name = "Jon Snow" };
 
         //Act & Assert (Step-by-step workflow)
-        // 1. POST api/author -> 201, extract AuthorId
-        var authorResponse = await Client.PostAsJsonAsync("api/author", authorDto);
+        // 1. POST api/authors -> 201, extract AuthorId
+        var authorResponse = await Client.PostAsJsonAsync("api/authors", authorDto);
         Assert.Equal(HttpStatusCode.Created, authorResponse.StatusCode);
         var authorId = (await authorResponse.Content.ReadFromJsonAsync<CreatedIdResponse>())!.Id;
 
@@ -44,8 +44,8 @@ public class AppWorkflowApiTests : BaseIntegrationTest
         Assert.Equal(HttpStatusCode.Created, bookResponse.StatusCode);
         var bookId = (await bookResponse.Content.ReadFromJsonAsync<CreatedIdResponse>())!.Id;
 
-        // 3. POST api/user -> 201, extract UserId
-        var userResponse = await Client.PostAsJsonAsync("api/user", userDto);
+        // 3. POST api/users -> 201, extract UserId
+        var userResponse = await Client.PostAsJsonAsync("api/users", userDto);
         Assert.Equal(HttpStatusCode.Created, userResponse.StatusCode);
         var userId = (await userResponse.Content.ReadFromJsonAsync<CreatedIdResponse>())!.Id;
 
@@ -57,19 +57,19 @@ public class AppWorkflowApiTests : BaseIntegrationTest
         Assert.Equal(bookId, book.Id);
         Assert.Equal(authorDto.Name, book.AuthorName);
 
-        // 5. POST api/loan with {BookId, UserId, DueAt} -> 201, extract LoanId
+        // 5. POST api/loans with {BookId, UserId, DueAt} -> 201, extract LoanId
         var loanDto = new LoanCreateDto
         {
             BookId = bookId,
             UserId = userId,
             DueAt = DateTime.UtcNow.AddDays(14)
         };
-        var loanResponse = await Client.PostAsJsonAsync("api/loan", loanDto);
+        var loanResponse = await Client.PostAsJsonAsync("api/loans", loanDto);
         Assert.Equal(HttpStatusCode.Created, loanResponse.StatusCode);
         var loanId = (await loanResponse.Content.ReadFromJsonAsync<CreatedIdResponse>())!.Id;
 
-        // 6. GET api/loan/{LoanId} -> 200, assert ReturnedAt is null and BookId/UserId match
-        var getLoanResponse = await Client.GetAsync($"api/loan/{loanId}");
+        // 6. GET api/loans/{LoanId} -> 200, assert ReturnedAt is null and BookId/UserId match
+        var getLoanResponse = await Client.GetAsync($"api/loans/{loanId}");
         Assert.Equal(HttpStatusCode.OK, getLoanResponse.StatusCode);
         var loan = await getLoanResponse.Content.ReadFromJsonAsync<LoanGetDto>();
         Assert.NotNull(loan);
@@ -77,12 +77,12 @@ public class AppWorkflowApiTests : BaseIntegrationTest
         Assert.Equal(bookId, loan.BookId);
         Assert.Equal(userId, loan.UserId);
 
-        // 7. PATCH api/loan/returnLoan/{LoanId} -> 204
-        var returnResponse = await Client.PatchAsync($"api/loan/returnLoan/{loanId}", null);
+        // 7. PATCH api/loans/returnLoan/{LoanId} -> 204
+        var returnResponse = await Client.PatchAsync($"api/loans/returnLoan/{loanId}", null);
         Assert.Equal(HttpStatusCode.NoContent, returnResponse.StatusCode);
 
-        // 8. GET api/loan/{LoanId} -> 200, assert ReturnedAt is now set
-        var getReturnedLoanResponse = await Client.GetAsync($"api/loan/{loanId}");
+        // 8. GET api/loans/{LoanId} -> 200, assert ReturnedAt is now set
+        var getReturnedLoanResponse = await Client.GetAsync($"api/loans/{loanId}");
         Assert.Equal(HttpStatusCode.OK, getReturnedLoanResponse.StatusCode);
         var returnedLoan = await getReturnedLoanResponse.Content.ReadFromJsonAsync<LoanGetDto>();
         Assert.NotNull(returnedLoan);
@@ -93,7 +93,7 @@ public class AppWorkflowApiTests : BaseIntegrationTest
     public async Task FullLifecycle_BookLoanedTwiceSequentially_BuildsCorrectLoanHistory()
     {
         //Arrange
-        var authorResponse = await Client.PostAsJsonAsync("api/author", new AuthorCreateDto { Name = "J.K. Rowling" });
+        var authorResponse = await Client.PostAsJsonAsync("api/authors", new AuthorCreateDto { Name = "J.K. Rowling" });
         var authorId = (await authorResponse.Content.ReadFromJsonAsync<CreatedIdResponse>())!.Id;
 
         var bookResponse = await Client.PostAsJsonAsync("api/books", new BookCreateDto
@@ -107,15 +107,15 @@ public class AppWorkflowApiTests : BaseIntegrationTest
         });
         var bookId = (await bookResponse.Content.ReadFromJsonAsync<CreatedIdResponse>())!.Id;
 
-        var userAResponse = await Client.PostAsJsonAsync("api/user", new UserCreateDto { Name = "User A" });
+        var userAResponse = await Client.PostAsJsonAsync("api/users", new UserCreateDto { Name = "User A" });
         var userAId = (await userAResponse.Content.ReadFromJsonAsync<CreatedIdResponse>())!.Id;
 
-        var userBResponse = await Client.PostAsJsonAsync("api/user", new UserCreateDto { Name = "User B" });
+        var userBResponse = await Client.PostAsJsonAsync("api/users", new UserCreateDto { Name = "User B" });
         var userBId = (await userBResponse.Content.ReadFromJsonAsync<CreatedIdResponse>())!.Id;
 
         //Act
         // 1. Loan to User A and return it
-        var loan1Response = await Client.PostAsJsonAsync("api/loan", new LoanCreateDto
+        var loan1Response = await Client.PostAsJsonAsync("api/loans", new LoanCreateDto
         {
             BookId = bookId,
             UserId = userAId,
@@ -123,11 +123,11 @@ public class AppWorkflowApiTests : BaseIntegrationTest
         });
         Assert.Equal(HttpStatusCode.Created, loan1Response.StatusCode);
         var loan1Id = (await loan1Response.Content.ReadFromJsonAsync<CreatedIdResponse>())!.Id;
-        var return1Response = await Client.PatchAsync($"api/loan/returnLoan/{loan1Id}", null);
+        var return1Response = await Client.PatchAsync($"api/loans/returnLoan/{loan1Id}", null);
         Assert.Equal(HttpStatusCode.NoContent, return1Response.StatusCode);
 
         // 2. Loan to User B and return it
-        var loan2Response = await Client.PostAsJsonAsync("api/loan", new LoanCreateDto
+        var loan2Response = await Client.PostAsJsonAsync("api/loans", new LoanCreateDto
         {
             BookId = bookId,
             UserId = userBId,
@@ -135,11 +135,11 @@ public class AppWorkflowApiTests : BaseIntegrationTest
         });
         Assert.Equal(HttpStatusCode.Created, loan2Response.StatusCode);
         var loan2Id = (await loan2Response.Content.ReadFromJsonAsync<CreatedIdResponse>())!.Id;
-        var return2Response = await Client.PatchAsync($"api/loan/returnLoan/{loan2Id}", null);
+        var return2Response = await Client.PatchAsync($"api/loans/returnLoan/{loan2Id}", null);
         Assert.Equal(HttpStatusCode.NoContent, return2Response.StatusCode);
 
         //Assert
-        var historyResponse = await Client.GetAsync($"api/loan?BookId={bookId}");
+        var historyResponse = await Client.GetAsync($"api/loans?BookId={bookId}");
         Assert.Equal(HttpStatusCode.OK, historyResponse.StatusCode);
         var history = await historyResponse.Content.ReadFromJsonAsync<PagedResult<LoanGetDto>>();
         Assert.NotNull(history);
@@ -153,7 +153,7 @@ public class AppWorkflowApiTests : BaseIntegrationTest
     public async Task FullLifecycle_SecondUserAttemptsToBorrowAlreadyLoanedBook_ReturnsConflictThenSucceedsAfterReturn()
     {
         //Arrange
-        var authorResponse = await Client.PostAsJsonAsync("api/author", new AuthorCreateDto { Name = "Frank Herbert" });
+        var authorResponse = await Client.PostAsJsonAsync("api/authors", new AuthorCreateDto { Name = "Frank Herbert" });
         var authorId = (await authorResponse.Content.ReadFromJsonAsync<CreatedIdResponse>())!.Id;
 
         var bookResponse = await Client.PostAsJsonAsync("api/books", new BookCreateDto
@@ -167,15 +167,15 @@ public class AppWorkflowApiTests : BaseIntegrationTest
         });
         var bookId = (await bookResponse.Content.ReadFromJsonAsync<CreatedIdResponse>())!.Id;
 
-        var userAResponse = await Client.PostAsJsonAsync("api/user", new UserCreateDto { Name = "Paul Atreides" });
+        var userAResponse = await Client.PostAsJsonAsync("api/users", new UserCreateDto { Name = "Paul Atreides" });
         var userAId = (await userAResponse.Content.ReadFromJsonAsync<CreatedIdResponse>())!.Id;
 
-        var userBResponse = await Client.PostAsJsonAsync("api/user", new UserCreateDto { Name = "Feyd-Rautha" });
+        var userBResponse = await Client.PostAsJsonAsync("api/users", new UserCreateDto { Name = "Feyd-Rautha" });
         var userBId = (await userBResponse.Content.ReadFromJsonAsync<CreatedIdResponse>())!.Id;
 
         //Act & Assert
         // User A borrows it -> 201
-        var borrowAResponse = await Client.PostAsJsonAsync("api/loan", new LoanCreateDto
+        var borrowAResponse = await Client.PostAsJsonAsync("api/loans", new LoanCreateDto
         {
             BookId = bookId,
             UserId = userAId,
@@ -185,7 +185,7 @@ public class AppWorkflowApiTests : BaseIntegrationTest
         var loanId = (await borrowAResponse.Content.ReadFromJsonAsync<CreatedIdResponse>())!.Id;
 
         // User B attempts to borrow the same book -> 409
-        var borrowBConflictResponse = await Client.PostAsJsonAsync("api/loan", new LoanCreateDto
+        var borrowBConflictResponse = await Client.PostAsJsonAsync("api/loans", new LoanCreateDto
         {
             BookId = bookId,
             UserId = userBId,
@@ -194,11 +194,11 @@ public class AppWorkflowApiTests : BaseIntegrationTest
         Assert.Equal(HttpStatusCode.Conflict, borrowBConflictResponse.StatusCode);
 
         // User A returns it -> 204
-        var returnResponse = await Client.PatchAsync($"api/loan/returnLoan/{loanId}", null);
+        var returnResponse = await Client.PatchAsync($"api/loans/returnLoan/{loanId}", null);
         Assert.Equal(HttpStatusCode.NoContent, returnResponse.StatusCode);
 
         // User B tries again -> 201
-        var borrowBSuccessResponse = await Client.PostAsJsonAsync("api/loan", new LoanCreateDto
+        var borrowBSuccessResponse = await Client.PostAsJsonAsync("api/loans", new LoanCreateDto
         {
             BookId = bookId,
             UserId = userBId,
@@ -211,7 +211,7 @@ public class AppWorkflowApiTests : BaseIntegrationTest
     public async Task FullLifecycle_DeletingAuthorWithPublishedBook_IsBlockedUntilBookIsDeleted()
     {
         //Arrange
-        var authorResponse = await Client.PostAsJsonAsync("api/author", new AuthorCreateDto { Name = "C.S. Lewis" });
+        var authorResponse = await Client.PostAsJsonAsync("api/authors", new AuthorCreateDto { Name = "C.S. Lewis" });
         var authorId = (await authorResponse.Content.ReadFromJsonAsync<CreatedIdResponse>())!.Id;
 
         var bookResponse = await Client.PostAsJsonAsync("api/books", new BookCreateDto
@@ -227,7 +227,7 @@ public class AppWorkflowApiTests : BaseIntegrationTest
 
         //Act & Assert
         // DELETE author -> 409 Conflict because active book exists
-        var deleteAuthorConflictResponse = await Client.DeleteAsync($"api/author/{authorId}");
+        var deleteAuthorConflictResponse = await Client.DeleteAsync($"api/authors/{authorId}");
         Assert.Equal(HttpStatusCode.Conflict, deleteAuthorConflictResponse.StatusCode);
 
         // DELETE book -> 204 NoContent
@@ -235,7 +235,7 @@ public class AppWorkflowApiTests : BaseIntegrationTest
         Assert.Equal(HttpStatusCode.NoContent, deleteBookResponse.StatusCode);
 
         // DELETE author again -> 204 NoContent now that active book is gone
-        var deleteAuthorSuccessResponse = await Client.DeleteAsync($"api/author/{authorId}");
+        var deleteAuthorSuccessResponse = await Client.DeleteAsync($"api/authors/{authorId}");
         Assert.Equal(HttpStatusCode.NoContent, deleteAuthorSuccessResponse.StatusCode);
     }
 
@@ -243,7 +243,7 @@ public class AppWorkflowApiTests : BaseIntegrationTest
     public async Task FullLifecycle_DeletingUserWithActiveLoan_IsBlockedUntilLoanIsReturned()
     {
         //Arrange
-        var authorResponse = await Client.PostAsJsonAsync("api/author", new AuthorCreateDto { Name = "Brandon Sanderson" });
+        var authorResponse = await Client.PostAsJsonAsync("api/authors", new AuthorCreateDto { Name = "Brandon Sanderson" });
         var authorId = (await authorResponse.Content.ReadFromJsonAsync<CreatedIdResponse>())!.Id;
 
         var bookResponse = await Client.PostAsJsonAsync("api/books", new BookCreateDto
@@ -257,10 +257,10 @@ public class AppWorkflowApiTests : BaseIntegrationTest
         });
         var bookId = (await bookResponse.Content.ReadFromJsonAsync<CreatedIdResponse>())!.Id;
 
-        var userResponse = await Client.PostAsJsonAsync("api/user", new UserCreateDto { Name = "Vin" });
+        var userResponse = await Client.PostAsJsonAsync("api/users", new UserCreateDto { Name = "Vin" });
         var userId = (await userResponse.Content.ReadFromJsonAsync<CreatedIdResponse>())!.Id;
 
-        var loanResponse = await Client.PostAsJsonAsync("api/loan", new LoanCreateDto
+        var loanResponse = await Client.PostAsJsonAsync("api/loans", new LoanCreateDto
         {
             BookId = bookId,
             UserId = userId,
@@ -270,15 +270,15 @@ public class AppWorkflowApiTests : BaseIntegrationTest
 
         //Act & Assert
         // DELETE user -> 409 Conflict because user has active unreturned loan
-        var deleteUserConflictResponse = await Client.DeleteAsync($"api/user/{userId}");
+        var deleteUserConflictResponse = await Client.DeleteAsync($"api/users/{userId}");
         Assert.Equal(HttpStatusCode.Conflict, deleteUserConflictResponse.StatusCode);
 
         // Return loan -> 204 NoContent
-        var returnResponse = await Client.PatchAsync($"api/loan/returnLoan/{loanId}", null);
+        var returnResponse = await Client.PatchAsync($"api/loans/returnLoan/{loanId}", null);
         Assert.Equal(HttpStatusCode.NoContent, returnResponse.StatusCode);
 
         // DELETE user again -> 204 NoContent now that loan is returned
-        var deleteUserSuccessResponse = await Client.DeleteAsync($"api/user/{userId}");
+        var deleteUserSuccessResponse = await Client.DeleteAsync($"api/users/{userId}");
         Assert.Equal(HttpStatusCode.NoContent, deleteUserSuccessResponse.StatusCode);
     }
 
@@ -286,7 +286,7 @@ public class AppWorkflowApiTests : BaseIntegrationTest
     public async Task FullLifecycle_BorrowingRequestChain_FailsCleanlyWhenBookDoesNotExist()
     {
         //Arrange
-        var userResponse = await Client.PostAsJsonAsync("api/user", new UserCreateDto { Name = "Frodo Baggins" });
+        var userResponse = await Client.PostAsJsonAsync("api/users", new UserCreateDto { Name = "Frodo Baggins" });
         var userId = (await userResponse.Content.ReadFromJsonAsync<CreatedIdResponse>())!.Id;
         var nonExistentBookId = Guid.CreateVersion7();
 
@@ -298,7 +298,7 @@ public class AppWorkflowApiTests : BaseIntegrationTest
         };
 
         //Act
-        var response = await Client.PostAsJsonAsync("api/loan", loanDto);
+        var response = await Client.PostAsJsonAsync("api/loans", loanDto);
 
         //Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -308,7 +308,7 @@ public class AppWorkflowApiTests : BaseIntegrationTest
     public async Task FullLifecycle_BorrowingRequestChain_FailsCleanlyWhenUserDoesNotExist()
     {
         //Arrange
-        var authorResponse = await Client.PostAsJsonAsync("api/author", new AuthorCreateDto { Name = "Philip K. Dick" });
+        var authorResponse = await Client.PostAsJsonAsync("api/authors", new AuthorCreateDto { Name = "Philip K. Dick" });
         var authorId = (await authorResponse.Content.ReadFromJsonAsync<CreatedIdResponse>())!.Id;
 
         var bookResponse = await Client.PostAsJsonAsync("api/books", new BookCreateDto
@@ -331,7 +331,7 @@ public class AppWorkflowApiTests : BaseIntegrationTest
         };
 
         //Act
-        var response = await Client.PostAsJsonAsync("api/loan", loanDto);
+        var response = await Client.PostAsJsonAsync("api/loans", loanDto);
 
         //Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -341,7 +341,7 @@ public class AppWorkflowApiTests : BaseIntegrationTest
     public async Task FullLifecycle_ReturningAlreadyReturnedLoan_IsRejectedButDoesNotCorruptState()
     {
         //Arrange
-        var authorResponse = await Client.PostAsJsonAsync("api/author", new AuthorCreateDto { Name = "Mary Shelley" });
+        var authorResponse = await Client.PostAsJsonAsync("api/authors", new AuthorCreateDto { Name = "Mary Shelley" });
         var authorId = (await authorResponse.Content.ReadFromJsonAsync<CreatedIdResponse>())!.Id;
 
         var bookResponse = await Client.PostAsJsonAsync("api/books", new BookCreateDto
@@ -355,10 +355,10 @@ public class AppWorkflowApiTests : BaseIntegrationTest
         });
         var bookId = (await bookResponse.Content.ReadFromJsonAsync<CreatedIdResponse>())!.Id;
 
-        var userResponse = await Client.PostAsJsonAsync("api/user", new UserCreateDto { Name = "Victor" });
+        var userResponse = await Client.PostAsJsonAsync("api/users", new UserCreateDto { Name = "Victor" });
         var userId = (await userResponse.Content.ReadFromJsonAsync<CreatedIdResponse>())!.Id;
 
-        var loanResponse = await Client.PostAsJsonAsync("api/loan", new LoanCreateDto
+        var loanResponse = await Client.PostAsJsonAsync("api/loans", new LoanCreateDto
         {
             BookId = bookId,
             UserId = userId,
@@ -366,10 +366,10 @@ public class AppWorkflowApiTests : BaseIntegrationTest
         });
         var loanId = (await loanResponse.Content.ReadFromJsonAsync<CreatedIdResponse>())!.Id;
 
-        var returnResponse = await Client.PatchAsync($"api/loan/returnLoan/{loanId}", null);
+        var returnResponse = await Client.PatchAsync($"api/loans/returnLoan/{loanId}", null);
         Assert.Equal(HttpStatusCode.NoContent, returnResponse.StatusCode);
 
-        var firstGetLoanResponse = await Client.GetAsync($"api/loan/{loanId}");
+        var firstGetLoanResponse = await Client.GetAsync($"api/loans/{loanId}");
         var firstReturnedLoan = await firstGetLoanResponse.Content.ReadFromJsonAsync<LoanGetDto>();
         Assert.NotNull(firstReturnedLoan);
         var initialReturnedAt = firstReturnedLoan.ReturnedAt;
@@ -377,12 +377,12 @@ public class AppWorkflowApiTests : BaseIntegrationTest
 
         //Act
         // PATCH return again on the same LoanId -> 400
-        var secondReturnResponse = await Client.PatchAsync($"api/loan/returnLoan/{loanId}", null);
+        var secondReturnResponse = await Client.PatchAsync($"api/loans/returnLoan/{loanId}", null);
 
         //Assert
         Assert.Equal(HttpStatusCode.BadRequest, secondReturnResponse.StatusCode);
 
-        var secondGetLoanResponse = await Client.GetAsync($"api/loan/{loanId}");
+        var secondGetLoanResponse = await Client.GetAsync($"api/loans/{loanId}");
         Assert.Equal(HttpStatusCode.OK, secondGetLoanResponse.StatusCode);
         var secondReturnedLoan = await secondGetLoanResponse.Content.ReadFromJsonAsync<LoanGetDto>();
         Assert.NotNull(secondReturnedLoan);

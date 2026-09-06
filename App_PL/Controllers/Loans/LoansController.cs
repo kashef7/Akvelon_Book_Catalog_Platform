@@ -9,11 +9,11 @@ namespace App_PL.Controllers.Loans;
 
 [ApiController]
 [Route("api/[controller]")]
-public class LoanController : ControllerBase
+public class LoansController : ControllerBase
 {
     private readonly ILoanService _loanService;
 
-    public LoanController(ILoanService loanService)
+    public LoansController(ILoanService loanService)
     {
         _loanService = loanService;
     }
@@ -40,7 +40,7 @@ public class LoanController : ControllerBase
     }
 
     [HttpPatch("returnLoan/{id:guid}")]
-    public async Task<IActionResult> ReturnLoanAsync(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> ReturnBookAsync(Guid id, CancellationToken cancellationToken)
     {
         var result = await _loanService.ReturnBookAsync(id, cancellationToken);
         return result.IsSuccess ? NoContent() : HandleFailure(result);

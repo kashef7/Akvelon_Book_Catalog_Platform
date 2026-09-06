@@ -48,7 +48,7 @@ public class UserService : IUserService
         var user = await _userRepo.GetUserByIdAsync(id, cancellationToken);
         if (user == null)
         {
-            _logger.LogWarning("User {UserId} Not Found", id);
+            _logger.LogWarning("user {UserId} not found", id);
             return Result<UserGetDto>.Failed(ErrorType.NotFound, "User Not Found");
         }
         return Result<UserGetDto>.Success(_mapper.Map<UserGetDto>(user));
@@ -68,12 +68,12 @@ public class UserService : IUserService
         var editedUser = await _userRepo.GetUserByIdAsync(editedUserId, cancellationToken);
         if (editedUser == null)
         {
-            _logger.LogWarning("Updating User Failed, User {UserId} Not Found", editedUserId);
+            _logger.LogWarning("updating user failed: user {UserId} not found", editedUserId);
             return Result.Failed(ErrorType.NotFound, "User Not Found");
         } 
         else if (editedUser.IsDeleted)
         {
-            _logger.LogWarning("Updating User Failed, User {UserId} is Deleted", editedUserId);
+            _logger.LogWarning("updating user failed: user {UserId} is deleted", editedUserId);
             return Result.Failed(ErrorType.NotFound, "User Deleted");
         }
         editedUser.UpdateUser(user.Name);
@@ -87,18 +87,18 @@ public class UserService : IUserService
         var deletedUser = await _userRepo.GetUserByIdAsync(id, cancellationToken);
         if (deletedUser == null)
         {
-            _logger.LogWarning("Deleting User Failed, User {UserId} Not Found", id);
+            _logger.LogWarning("deleting user failed: user {UserId} not found", id);
             return Result.Failed(ErrorType.NotFound, "User Not Found");
         } 
         else if (deletedUser.IsDeleted)
         {
-            _logger.LogWarning("Deleting User Failed, User {UserId} is Deleted", id);
+            _logger.LogWarning("deleting user failed: user {UserId} is deleted", id);
             return Result.Failed(ErrorType.NotFound, "User Deleted");
         }
 
         if (await _loanRepo.HasActiveLoanByUserAsync(id, cancellationToken))
         {
-            _logger.LogWarning("Deleting User Failed, User {UserId} has active Loans", id);
+            _logger.LogWarning("deleting user failed: user {UserId} has active loans", id);
             return Result.Failed(ErrorType.Conflict, "User Has Active Loan");
         }
         deletedUser.DeleteUser();

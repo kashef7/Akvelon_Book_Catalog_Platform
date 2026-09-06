@@ -30,9 +30,6 @@
       <ProjectReference Include="..\App_BLL\App_BLL.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Exceptions\CustomExceptions\Implementation\" />
-    </ItemGroup>
 
     <ItemGroup>
       <Content Include="..\.dockerignore">
