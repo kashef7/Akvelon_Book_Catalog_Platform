@@ -11,3 +11,4 @@
 **/*.*proj.user
 **/bin
 **/obj
+**/logs/

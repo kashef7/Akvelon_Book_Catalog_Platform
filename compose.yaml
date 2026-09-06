@@ -26,5 +26,8 @@
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - api_logs:/app/logs
 volumes:
   sql_data:
+  api_logs:
