@@ -666,5 +666,71 @@ One decision I would revisit later is the amount of eager loading performed by r
 
 I would also revisit the current startup migration behavior for production deployments. Automatically applying migrations is convenient for development and containerized environments, but a production deployment strategy may eventually require migrations to be executed as an explicit deployment step instead.
 
-Most importantly, week 3 validated that the abstractions from the previous weeks were not unnecessary structure: the repository and service contracts allowed the persistence technology to change while the business layer remained largely stable.
 ---
+
+# Week 4 — Production Readiness, Resilience & Reflection
+
+## What changed this week
+
+Week 4 didn't add new domain features. Instead, it took the working service from week 3 and asked a different question: what happens when this breaks at three in the morning with nobody watching? That meant structured logging, health checks, configuration validation, graceful shutdown, retry/resilience on the database dependency, integration tests against a real database, and a cleanup pass.
+
+The architecture itself did not change shape this week — see the "Architecture & evolution" section below for why.
+
+---
+
+## 1. Architecture & Evolution
+
+I adopted a standard layered architecture back in week 1, based on what I already knew, and it turned out to be the right baseline for what this project asked for. Looking back across all four weeks, the architecture stayed **structurally constant** — `App_PL → App_BLL → App_DAL`, plus `App_Common` from week 2 onward.
+
+The real evolution wasn't in the shape of the layers, it was in refining the boundaries between them and how data flows across them. The clearest example is `App_Common`: it exists specifically to hold shared data contracts and types that don't conceptually belong to `App_BLL` or `App_DAL` alone (see week 2's notes on `BookStatus`/`BookQuery`). By week 4, that pattern held up — nothing forced a restructure, it just needed the right container for shared concepts from early on.
+
+---
+
+## 2. Transaction Management — Why There's No Explicit `BeginTransaction`
+
+I deliberately did not introduce explicit `BeginTransaction()`/`Commit()` blocks anywhere in the codebase.
+
+The reason is that every current write path — creating a book, creating a loan, returning a loan — mutates a **single entity** and calls `SaveChangesAsync()` **once**. A single `SaveChangesAsync()` call is already atomic: either the whole set of tracked changes commits, or none of it does. Wrapping that in an explicit transaction would add ceremony without adding any actual guarantee.
+
+The one place this domain has a real concurrency hazard — two users trying to borrow the same book at once — isn't solved with a transaction either. It's solved with a **database-level constraint**: a filtered unique index on `Loan.BookId WHERE ReturnedAt IS NULL` (see week 3's notes). That index is the actual source of truth for "only one active loan per book," not application-level transaction scoping.
+
+Going forward, the rule I'm applying is: **explicit transaction boundaries only become necessary the moment an operation needs to mutate more than one entity across more than one `SaveChangesAsync()` call.** Nothing in this domain currently does that, so I haven't manufactured a transaction to look more "production-grade" — that would be adding complexity the codebase doesn't need yet, not defending against a real failure mode.
+
+---
+
+## 3. Retrospective — What I'd Do Differently
+
+Two things stand out looking back across the whole month:
+
+**Lock the domain down before writing logic.** `Book.AuthorId` becoming a real foreign key in week 3, and `BookStatus`/`BookQuery` moving into `App_Common` in week 2, were both necessary changes — but both also rippled through DTOs, mappers, repositories, and tests because the entities and their relationships weren't fully decided before I started writing logic on top of them. If I'd spent more time up front deciding "here is the full entity model, here are all the relationships" before week 1's first controller, I'd have avoided most of that repeated refactoring.
+
+**Set up cross-cutting concerns before features.** Logging, health checks, database setup, and configuration binding are the kind of things that are easy to defer because they don't feel like "the feature," but every week I added a feature on top of infrastructure that wasn't fully solid yet, I ended up going back and adjusting how that feature logged, handled errors, or read config. Doing infrastructure first next time would mean features get built on a settled foundation instead of one that's still shifting under them.
+
+---
+
+## 4. System Limitations & Scalability Bottlenecks
+
+**Unbounded table growth.** `Book`, `Author`, and `User` all use soft delete (`IsDeleted` + `DeletedAt`) with no archiving or hard-delete/cleanup mechanism. Under real volume, these tables only ever grow — deleted rows never leave.
+
+`Loan` is a related but distinct case: it doesn't soft-delete at all, because it's modeled as an **immutable historical record** (see week 3) — a return sets `ReturnedAt`, it never removes the row. That's the right call for preserving borrowing history, but it means `Loan` is an append-only table by design, and it's the one most likely to balloon fastest in a real system, since every borrow ever made adds a permanent row with no expiry or archival path.
+
+Both problems have the same underlying gap: nothing in the current design decides when old data stops needing to live in the primary table. A real next step would be a retention/archiving strategy (e.g., moving old returned loans or long-soft-deleted records to cold storage) rather than solving it with more indexes on an ever-growing table.
+
+---
+
+## 5. Core Technical Learnings (the whole month)
+
+- **Transaction scope** — knowing when a single `SaveChangesAsync()` already gives you atomicity versus when an operation genuinely needs an explicit transaction boundary, instead of defaulting to one "just in case."
+- **Structured logging** — what context actually belongs in a log line, how to pick a level deliberately (`LogInformation` for started/completed, `LogWarning` for expected business-rule failures, `LogError` reserved for unhandled exceptions), and what makes a log entry useful at 3am versus just noise.
+- **Configuration validation** — using the options pattern with `IValidateOptions<T>` and `ValidateOnStart()` so the app fails at startup with a specific error message instead of starting successfully and breaking on the first request.
+- **Docker & Docker Compose** — going past "copy a Dockerfile from a tutorial" into understanding multi-stage builds, why layer/stage order affects build time and image size, and how Compose orchestrates the API and database as separate, health-checked services.
+- **Git branching** — moving from committing straight to `main` toward a real feature-branch workflow, and treating commit history as something someone else should be able to read.
+- **Cancellation tokens** — propagating `CancellationToken` through async call chains (controller → service → repository) so client disconnects and shutdown signals actually stop in-flight work cleanly instead of running to completion regardless, or crashing.
+
+---
+
+## 6. Development Strategy & Philosophy
+
+I intentionally kept the endpoint surface and entity attribute list small throughout the month rather than continuously adding features. The goal wasn't to build the largest possible feature set — it was to actually understand the architecture, the backend mechanics, and the tooling (EF Core, Docker, Serilog, health checks, resilience) deeply enough to defend every decision at the demo.
+
+Concretely, that meant a handful of times this month I chose *not* to add something (an extra `ErrorType`, an extra filter, an extra exception subclass) because I didn't yet have a real case that needed it — see week 2's notes on deliberately not adding `Conflict` until week 3 actually produced a concurrency case for it. I'd rather bring a smaller, fully-understood system to the demo than a larger one I built on instinct.
