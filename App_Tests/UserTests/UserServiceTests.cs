@@ -50,12 +50,12 @@ public class UserServiceTests
             new UserGetDto { Id = Guid.NewGuid(), Name = "User3" },
         };
 
-        _userRepoMock.Setup(repo => repo.GetAllUsersAsync(It.IsAny<UserQuery>())).ReturnsAsync((users, totalCount));
+        _userRepoMock.Setup(repo => repo.GetAllUsersAsync(It.IsAny<UserQuery>(), It.IsAny<CancellationToken>())).ReturnsAsync((users, totalCount));
         _mapperMock.Setup(m => m.Map<UserQuery>(userQuery)).Returns(mappedQuery);
         _mapperMock.Setup(m => m.Map<IReadOnlyList<UserGetDto>>(users)).Returns(userDtos);
 
         //Act
-        var result = await _userService.GetAllUsersAsync(userQuery);
+        var result = await _userService.GetAllUsersAsync(userQuery, CancellationToken.None);
 
         //Assert
         Assert.True(result.IsSuccess);
@@ -65,7 +65,7 @@ public class UserServiceTests
         Assert.Equal(userQuery.PageSize, result.Data.PageSize);
         _mapperMock.Verify(m => m.Map<UserQuery>(userQuery), Times.Once);
         _mapperMock.Verify(m => m.Map<IReadOnlyList<UserGetDto>>(users), Times.Once);
-        _userRepoMock.Verify(repo => repo.GetAllUsersAsync(mappedQuery), Times.Once);
+        _userRepoMock.Verify(repo => repo.GetAllUsersAsync(mappedQuery, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     //test GetAllUsersAsync maps and forwards filter values to the repo unchanged
@@ -89,18 +89,18 @@ public class UserServiceTests
             new UserGetDto { Id = Guid.NewGuid(), Name = "User1" },
         };
 
-        _userRepoMock.Setup(repo => repo.GetAllUsersAsync(It.IsAny<UserQuery>())).ReturnsAsync((users, totalCount));
+        _userRepoMock.Setup(repo => repo.GetAllUsersAsync(It.IsAny<UserQuery>(), It.IsAny<CancellationToken>())).ReturnsAsync((users, totalCount));
         _mapperMock.Setup(m => m.Map<UserQuery>(userQuery)).Returns(mappedQuery);
         _mapperMock.Setup(m => m.Map<IReadOnlyList<UserGetDto>>(users)).Returns(userDtos);
 
         //Act
-        var result = await _userService.GetAllUsersAsync(userQuery);
+        var result = await _userService.GetAllUsersAsync(userQuery, CancellationToken.None);
 
         //Assert
         Assert.True(result.IsSuccess);
         Assert.Equal(userDtos, result.Data!.Items);
         _mapperMock.Verify(m => m.Map<UserQuery>(userQuery), Times.Once);
-        _userRepoMock.Verify(repo => repo.GetAllUsersAsync(mappedQuery), Times.Once);
+        _userRepoMock.Verify(repo => repo.GetAllUsersAsync(mappedQuery, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     //test GetUserAsync returns user when the id is found
@@ -111,11 +111,11 @@ public class UserServiceTests
         var user = new User("User1");
         var userDto = new UserGetDto { Id = user.Id, Name = "User1" };
 
-        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(user.Id)).ReturnsAsync(user);
+        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(user.Id, It.IsAny<CancellationToken>())).ReturnsAsync(user);
         _mapperMock.Setup(m => m.Map<UserGetDto>(user)).Returns(userDto);
 
         //Act
-        var result = await _userService.GetUserAsync(user.Id);
+        var result = await _userService.GetUserAsync(user.Id, CancellationToken.None);
 
         //Assert
         Assert.True(result.IsSuccess);
@@ -128,10 +128,10 @@ public class UserServiceTests
     {
         //Arrange
         var userId = Guid.NewGuid();
-        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(userId)).ReturnsAsync((User?)null);
+        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(userId, It.IsAny<CancellationToken>())).ReturnsAsync((User?)null);
 
         //Act
-        var result = await _userService.GetUserAsync(userId);
+        var result = await _userService.GetUserAsync(userId, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -152,7 +152,7 @@ public class UserServiceTests
             .Returns(Task.CompletedTask);
 
         //Act
-        var result = await _userService.AddUserAsync(createDto);
+        var result = await _userService.AddUserAsync(createDto, CancellationToken.None);
 
         //Assert
         Assert.True(result.IsSuccess);
@@ -170,10 +170,10 @@ public class UserServiceTests
         //Arrange
         var existingUser = new User("Old Name");
         var editDto = new UserEditDto { Name = "New Name" };
-        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(existingUser.Id)).ReturnsAsync(existingUser);
+        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(existingUser.Id, It.IsAny<CancellationToken>())).ReturnsAsync(existingUser);
 
         //Act
-        var result = await _userService.UpdateUserAsync(editDto, existingUser.Id);
+        var result = await _userService.UpdateUserAsync(editDto, existingUser.Id, CancellationToken.None);
 
         //Assert
         Assert.True(result.IsSuccess);
@@ -188,10 +188,10 @@ public class UserServiceTests
         //Arrange
         var userId = Guid.NewGuid();
         var editDto = new UserEditDto { Name = "New Name" };
-        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(userId)).ReturnsAsync((User?)null);
+        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(userId, It.IsAny<CancellationToken>())).ReturnsAsync((User?)null);
 
         //Act
-        var result = await _userService.UpdateUserAsync(editDto, userId);
+        var result = await _userService.UpdateUserAsync(editDto, userId, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -206,10 +206,10 @@ public class UserServiceTests
         var deletedUser = new User("User Name");
         deletedUser.DeleteUser();
         var editDto = new UserEditDto { Name = "New Name" };
-        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(deletedUser.Id)).ReturnsAsync(deletedUser);
+        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(deletedUser.Id, It.IsAny<CancellationToken>())).ReturnsAsync(deletedUser);
 
         //Act
-        var result = await _userService.UpdateUserAsync(editDto, deletedUser.Id);
+        var result = await _userService.UpdateUserAsync(editDto, deletedUser.Id, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -222,11 +222,11 @@ public class UserServiceTests
     {
         //Arrange
         var existingUser = new User("User Name");
-        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(existingUser.Id)).ReturnsAsync(existingUser);
-        _loanRepoMock.Setup(repo => repo.HasActiveLoanByUserAsync(existingUser.Id)).ReturnsAsync(false);
+        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(existingUser.Id, It.IsAny<CancellationToken>())).ReturnsAsync(existingUser);
+        _loanRepoMock.Setup(repo => repo.HasActiveLoanByUserAsync(existingUser.Id, It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
         //Act
-        var result = await _userService.DeleteUserAsync(existingUser.Id);
+        var result = await _userService.DeleteUserAsync(existingUser.Id, CancellationToken.None);
 
         //Assert
         Assert.True(result.IsSuccess);
@@ -240,10 +240,10 @@ public class UserServiceTests
     {
         //Arrange
         var userId = Guid.NewGuid();
-        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(userId)).ReturnsAsync((User?)null);
+        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(userId, It.IsAny<CancellationToken>())).ReturnsAsync((User?)null);
 
         //Act
-        var result = await _userService.DeleteUserAsync(userId);
+        var result = await _userService.DeleteUserAsync(userId, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -257,10 +257,10 @@ public class UserServiceTests
         //Arrange
         var deletedUser = new User("User Name");
         deletedUser.DeleteUser();
-        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(deletedUser.Id)).ReturnsAsync(deletedUser);
+        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(deletedUser.Id, It.IsAny<CancellationToken>())).ReturnsAsync(deletedUser);
 
         //Act
-        var result = await _userService.DeleteUserAsync(deletedUser.Id);
+        var result = await _userService.DeleteUserAsync(deletedUser.Id, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -273,11 +273,11 @@ public class UserServiceTests
     {
         //Arrange
         var existingUser = new User("User Name");
-        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(existingUser.Id)).ReturnsAsync(existingUser);
-        _loanRepoMock.Setup(repo => repo.HasActiveLoanByUserAsync(existingUser.Id)).ReturnsAsync(true);
+        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(existingUser.Id, It.IsAny<CancellationToken>())).ReturnsAsync(existingUser);
+        _loanRepoMock.Setup(repo => repo.HasActiveLoanByUserAsync(existingUser.Id, It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         //Act
-        var result = await _userService.DeleteUserAsync(existingUser.Id);
+        var result = await _userService.DeleteUserAsync(existingUser.Id, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);

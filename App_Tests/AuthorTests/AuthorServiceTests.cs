@@ -50,12 +50,12 @@ public class AuthorServiceTests
             new AuthorGetDto { Id = Guid.NewGuid(), Name = "Author3" },
         };
 
-        _authorRepoMock.Setup(repo => repo.GetAllAuthorsAsync(It.IsAny<AuthorQuery>())).ReturnsAsync((authors, totalCount));
+        _authorRepoMock.Setup(repo => repo.GetAllAuthorsAsync(It.IsAny<AuthorQuery>(), It.IsAny<CancellationToken>())).ReturnsAsync((authors, totalCount));
         _mapperMock.Setup(m => m.Map<AuthorQuery>(authorQuery)).Returns(mappedQuery);
         _mapperMock.Setup(m => m.Map<IReadOnlyList<AuthorGetDto>>(authors)).Returns(authorDtos);
 
         //Act
-        var result = await _authorService.GetAllAuthorsAsync(authorQuery);
+        var result = await _authorService.GetAllAuthorsAsync(authorQuery, CancellationToken.None);
 
         //Assert
         Assert.True(result.IsSuccess);
@@ -65,7 +65,7 @@ public class AuthorServiceTests
         Assert.Equal(authorQuery.PageSize, result.Data.PageSize);
         _mapperMock.Verify(m => m.Map<AuthorQuery>(authorQuery), Times.Once);
         _mapperMock.Verify(m => m.Map<IReadOnlyList<AuthorGetDto>>(authors), Times.Once);
-        _authorRepoMock.Verify(repo => repo.GetAllAuthorsAsync(mappedQuery), Times.Once);
+        _authorRepoMock.Verify(repo => repo.GetAllAuthorsAsync(mappedQuery, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     //test GetAllAuthorsAsync maps and forwards filter values to the repo unchanged
@@ -89,18 +89,18 @@ public class AuthorServiceTests
             new AuthorGetDto { Id = Guid.NewGuid(), Name = "Author1" },
         };
 
-        _authorRepoMock.Setup(repo => repo.GetAllAuthorsAsync(It.IsAny<AuthorQuery>())).ReturnsAsync((authors, totalCount));
+        _authorRepoMock.Setup(repo => repo.GetAllAuthorsAsync(It.IsAny<AuthorQuery>(), It.IsAny<CancellationToken>())).ReturnsAsync((authors, totalCount));
         _mapperMock.Setup(m => m.Map<AuthorQuery>(authorQuery)).Returns(mappedQuery);
         _mapperMock.Setup(m => m.Map<IReadOnlyList<AuthorGetDto>>(authors)).Returns(authorDtos);
 
         //Act
-        var result = await _authorService.GetAllAuthorsAsync(authorQuery);
+        var result = await _authorService.GetAllAuthorsAsync(authorQuery, CancellationToken.None);
 
         //Assert
         Assert.True(result.IsSuccess);
         Assert.Equal(authorDtos, result.Data!.Items);
         _mapperMock.Verify(m => m.Map<AuthorQuery>(authorQuery), Times.Once);
-        _authorRepoMock.Verify(repo => repo.GetAllAuthorsAsync(mappedQuery), Times.Once);
+        _authorRepoMock.Verify(repo => repo.GetAllAuthorsAsync(mappedQuery, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     //test GetAuthorAsync returns author when the id is found
@@ -111,11 +111,11 @@ public class AuthorServiceTests
         var author = new Author("Author1");
         var authorDto = new AuthorGetDto { Id = author.Id, Name = "Author1" };
 
-        _authorRepoMock.Setup(repo => repo.GetAuthorByIdAsync(author.Id)).ReturnsAsync(author);
+        _authorRepoMock.Setup(repo => repo.GetAuthorByIdAsync(author.Id, It.IsAny<CancellationToken>())).ReturnsAsync(author);
         _mapperMock.Setup(m => m.Map<AuthorGetDto>(author)).Returns(authorDto);
 
         //Act
-        var result = await _authorService.GetAuthorAsync(author.Id);
+        var result = await _authorService.GetAuthorAsync(author.Id, CancellationToken.None);
 
         //Assert
         Assert.True(result.IsSuccess);
@@ -128,10 +128,10 @@ public class AuthorServiceTests
     {
         //Arrange
         var authorId = Guid.NewGuid();
-        _authorRepoMock.Setup(repo => repo.GetAuthorByIdAsync(authorId)).ReturnsAsync((Author?)null);
+        _authorRepoMock.Setup(repo => repo.GetAuthorByIdAsync(authorId, It.IsAny<CancellationToken>())).ReturnsAsync((Author?)null);
 
         //Act
-        var result = await _authorService.GetAuthorAsync(authorId);
+        var result = await _authorService.GetAuthorAsync(authorId, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -152,7 +152,7 @@ public class AuthorServiceTests
             .Returns(Task.CompletedTask);
 
         //Act
-        var result = await _authorService.AddAuthorAsync(createDto);
+        var result = await _authorService.AddAuthorAsync(createDto, CancellationToken.None);
 
         //Assert
         Assert.True(result.IsSuccess);
@@ -170,10 +170,10 @@ public class AuthorServiceTests
         //Arrange
         var existingAuthor = new Author("Old Name");
         var editDto = new AuthorEditDto { Name = "New Name" };
-        _authorRepoMock.Setup(repo => repo.GetAuthorByIdAsync(existingAuthor.Id)).ReturnsAsync(existingAuthor);
+        _authorRepoMock.Setup(repo => repo.GetAuthorByIdAsync(existingAuthor.Id, It.IsAny<CancellationToken>())).ReturnsAsync(existingAuthor);
 
         //Act
-        var result = await _authorService.UpdateAuthorAsync(editDto, existingAuthor.Id);
+        var result = await _authorService.UpdateAuthorAsync(editDto, existingAuthor.Id, CancellationToken.None);
 
         //Assert
         Assert.True(result.IsSuccess);
@@ -188,10 +188,10 @@ public class AuthorServiceTests
         //Arrange
         var authorId = Guid.NewGuid();
         var editDto = new AuthorEditDto { Name = "New Name" };
-        _authorRepoMock.Setup(repo => repo.GetAuthorByIdAsync(authorId)).ReturnsAsync((Author?)null);
+        _authorRepoMock.Setup(repo => repo.GetAuthorByIdAsync(authorId, It.IsAny<CancellationToken>())).ReturnsAsync((Author?)null);
 
         //Act
-        var result = await _authorService.UpdateAuthorAsync(editDto, authorId);
+        var result = await _authorService.UpdateAuthorAsync(editDto, authorId, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -206,10 +206,10 @@ public class AuthorServiceTests
         var deletedAuthor = new Author("Author Name");
         deletedAuthor.DeleteAuthor();
         var editDto = new AuthorEditDto { Name = "New Name" };
-        _authorRepoMock.Setup(repo => repo.GetAuthorByIdAsync(deletedAuthor.Id)).ReturnsAsync(deletedAuthor);
+        _authorRepoMock.Setup(repo => repo.GetAuthorByIdAsync(deletedAuthor.Id, It.IsAny<CancellationToken>())).ReturnsAsync(deletedAuthor);
 
         //Act
-        var result = await _authorService.UpdateAuthorAsync(editDto, deletedAuthor.Id);
+        var result = await _authorService.UpdateAuthorAsync(editDto, deletedAuthor.Id, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -222,11 +222,11 @@ public class AuthorServiceTests
     {
         //Arrange
         var existingAuthor = new Author("Author Name");
-        _authorRepoMock.Setup(repo => repo.GetAuthorByIdAsync(existingAuthor.Id)).ReturnsAsync(existingAuthor);
-        _bookRepoMock.Setup(repo => repo.HasActiveBookByAuthorAsync(existingAuthor.Id)).ReturnsAsync(false);
+        _authorRepoMock.Setup(repo => repo.GetAuthorByIdAsync(existingAuthor.Id, It.IsAny<CancellationToken>())).ReturnsAsync(existingAuthor);
+        _bookRepoMock.Setup(repo => repo.HasActiveBookByAuthorAsync(existingAuthor.Id, It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
         //Act
-        var result = await _authorService.DeleteAuthorAsync(existingAuthor.Id);
+        var result = await _authorService.DeleteAuthorAsync(existingAuthor.Id, CancellationToken.None);
 
         //Assert
         Assert.True(result.IsSuccess);
@@ -240,10 +240,10 @@ public class AuthorServiceTests
     {
         //Arrange
         var authorId = Guid.NewGuid();
-        _authorRepoMock.Setup(repo => repo.GetAuthorByIdAsync(authorId)).ReturnsAsync((Author?)null);
+        _authorRepoMock.Setup(repo => repo.GetAuthorByIdAsync(authorId, It.IsAny<CancellationToken>())).ReturnsAsync((Author?)null);
 
         //Act
-        var result = await _authorService.DeleteAuthorAsync(authorId);
+        var result = await _authorService.DeleteAuthorAsync(authorId, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -257,10 +257,10 @@ public class AuthorServiceTests
         //Arrange
         var deletedAuthor = new Author("Author Name");
         deletedAuthor.DeleteAuthor();
-        _authorRepoMock.Setup(repo => repo.GetAuthorByIdAsync(deletedAuthor.Id)).ReturnsAsync(deletedAuthor);
+        _authorRepoMock.Setup(repo => repo.GetAuthorByIdAsync(deletedAuthor.Id, It.IsAny<CancellationToken>())).ReturnsAsync(deletedAuthor);
 
         //Act
-        var result = await _authorService.DeleteAuthorAsync(deletedAuthor.Id);
+        var result = await _authorService.DeleteAuthorAsync(deletedAuthor.Id, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -273,11 +273,11 @@ public class AuthorServiceTests
     {
         //Arrange
         var existingAuthor = new Author("Author Name");
-        _authorRepoMock.Setup(repo => repo.GetAuthorByIdAsync(existingAuthor.Id)).ReturnsAsync(existingAuthor);
-        _bookRepoMock.Setup(repo => repo.HasActiveBookByAuthorAsync(existingAuthor.Id)).ReturnsAsync(true);
+        _authorRepoMock.Setup(repo => repo.GetAuthorByIdAsync(existingAuthor.Id, It.IsAny<CancellationToken>())).ReturnsAsync(existingAuthor);
+        _bookRepoMock.Setup(repo => repo.HasActiveBookByAuthorAsync(existingAuthor.Id, It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         //Act
-        var result = await _authorService.DeleteAuthorAsync(existingAuthor.Id);
+        var result = await _authorService.DeleteAuthorAsync(existingAuthor.Id, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);

@@ -20,53 +20,53 @@ public class BooksController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] BookQueryParams query)
+    public async Task<IActionResult> GetAll([FromQuery] BookQueryParams query, CancellationToken cancellationToken)
     {
-        var result = await _bookService.GetAllBooksAsync(query);
+        var result = await _bookService.GetAllBooksAsync(query, cancellationToken);
         return result.IsSuccess ? Ok(result.Data) : HandleFailure(result);
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var result = await _bookService.GetBookAsync(id);
+        var result = await _bookService.GetBookAsync(id, cancellationToken);
         return result.IsSuccess ? Ok(result.Data) : HandleFailure(result);
     }
     
     [HttpGet("{isbn}")]
-    public async Task<IActionResult> GetByIsbn(string isbn)
+    public async Task<IActionResult> GetByIsbn(string isbn, CancellationToken cancellationToken)
     {
-        var result = await _bookService.GetBookByIsbnAsync(isbn);
+        var result = await _bookService.GetBookByIsbnAsync(isbn, cancellationToken);
         return result.IsSuccess ? Ok(result.Data) : HandleFailure(result);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(BookCreateDto dto)
+    public async Task<IActionResult> Create(BookCreateDto dto, CancellationToken cancellationToken)
     {
-        var result = await _bookService.AddBookAsync(dto);
+        var result = await _bookService.AddBookAsync(dto, cancellationToken);
         return result.IsSuccess
             ? CreatedAtAction(nameof(GetById), new { id = result.Data }, new { id = result.Data })
             : HandleFailure(result);
     }
 
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, BookEditDto dto)
+    public async Task<IActionResult> Update(Guid id, BookEditDto dto, CancellationToken cancellationToken)
     {
-        var result = await _bookService.UpdateBookAsync(dto, id);
+        var result = await _bookService.UpdateBookAsync(dto, id, cancellationToken);
         return result.IsSuccess ? NoContent() : HandleFailure(result);
     }
     
     [HttpPatch("rating/{id:guid}")]
-    public async Task<IActionResult> UpdateRating(Guid id, BookRatingDto rating)
+    public async Task<IActionResult> UpdateRating(Guid id, BookRatingDto rating, CancellationToken cancellationToken)
     {
-        var result = await _bookService.UpdateBookRatingAsync(id, rating.Rating);
+        var result = await _bookService.UpdateBookRatingAsync(id, rating.Rating, cancellationToken);
         return result.IsSuccess ? NoContent() : HandleFailure(result);
     }
 
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var result = await _bookService.DeleteBookAsync(id);
+        var result = await _bookService.DeleteBookAsync(id, cancellationToken);
         return result.IsSuccess ? NoContent() : HandleFailure(result);
     }
     

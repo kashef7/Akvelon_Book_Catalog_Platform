@@ -7,4 +7,5 @@
   <Project Path="App_DAL/App_DAL.csproj" />
   <Project Path="App_PL/App_PL.csproj" />
   <Project Path="App_Tests/App_Tests.csproj" />
+  <Project Path="App_Tests_Integration/App_Tests_Integration.csproj" />
 </Solution>

@@ -69,12 +69,12 @@ public class LoanServiceTests
             new LoanGetDto { Id = loan2.Id, BookTitle = "Book 2", UserName = "User 2", DueAt = dueAt }
         };
 
-        _loanRepoMock.Setup(repo => repo.GetAllLoansAsync(It.IsAny<LoanQuery>())).ReturnsAsync((loans, totalCount));
+        _loanRepoMock.Setup(repo => repo.GetAllLoansAsync(It.IsAny<LoanQuery>(), It.IsAny<CancellationToken>())).ReturnsAsync((loans, totalCount));
         _mapperMock.Setup(m => m.Map<LoanQuery>(loanQuery)).Returns(mappedQuery);
         _mapperMock.Setup(m => m.Map<IReadOnlyList<LoanGetDto>>(loans)).Returns(loanDtos);
 
         //Act
-        var result = await _loanService.GetLoansAsync(loanQuery);
+        var result = await _loanService.GetLoansAsync(loanQuery, CancellationToken.None);
 
         //Assert
         Assert.True(result.IsSuccess);
@@ -84,7 +84,7 @@ public class LoanServiceTests
         Assert.Equal(loanQuery.PageSize, result.Data.PageSize);
         _mapperMock.Verify(m => m.Map<LoanQuery>(loanQuery), Times.Once);
         _mapperMock.Verify(m => m.Map<IReadOnlyList<LoanGetDto>>(loans), Times.Once);
-        _loanRepoMock.Verify(repo => repo.GetAllLoansAsync(mappedQuery), Times.Once);
+        _loanRepoMock.Verify(repo => repo.GetAllLoansAsync(mappedQuery, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     //test GetLoansAsync maps and forwards filter values to the repo unchanged
@@ -116,18 +116,18 @@ public class LoanServiceTests
             new LoanGetDto { Id = loan1.Id, BookTitle = "Book 1", UserName = "User 1", DueAt = dueAt }
         };
 
-        _loanRepoMock.Setup(repo => repo.GetAllLoansAsync(It.IsAny<LoanQuery>())).ReturnsAsync((loans, totalCount));
+        _loanRepoMock.Setup(repo => repo.GetAllLoansAsync(It.IsAny<LoanQuery>(), It.IsAny<CancellationToken>())).ReturnsAsync((loans, totalCount));
         _mapperMock.Setup(m => m.Map<LoanQuery>(loanQuery)).Returns(mappedQuery);
         _mapperMock.Setup(m => m.Map<IReadOnlyList<LoanGetDto>>(loans)).Returns(loanDtos);
 
         //Act
-        var result = await _loanService.GetLoansAsync(loanQuery);
+        var result = await _loanService.GetLoansAsync(loanQuery, CancellationToken.None);
 
         //Assert
         Assert.True(result.IsSuccess);
         Assert.Equal(loanDtos, result.Data!.Items);
         _mapperMock.Verify(m => m.Map<LoanQuery>(loanQuery), Times.Once);
-        _loanRepoMock.Verify(repo => repo.GetAllLoansAsync(mappedQuery), Times.Once);
+        _loanRepoMock.Verify(repo => repo.GetAllLoansAsync(mappedQuery, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     //test GetLoanByIdAsync returns loan and mapped LoanId matches loan Id
@@ -145,16 +145,16 @@ public class LoanServiceTests
             DueAt = dueAt
         };
 
-        _loanRepoMock.Setup(repo => repo.GetLoanByIdAsync(loan.Id)).ReturnsAsync(loan);
+        _loanRepoMock.Setup(repo => repo.GetLoanByIdAsync(loan.Id, It.IsAny<CancellationToken>())).ReturnsAsync(loan);
         _mapperMock.Setup(m => m.Map<LoanGetDto>(loan)).Returns(loanDto);
 
         //Act
-        var result = await _loanService.GetLoanByIdAsync(loan.Id);
+        var result = await _loanService.GetLoanByIdAsync(loan.Id, CancellationToken.None);
 
         //Assert
         Assert.True(result.IsSuccess);
         Assert.Equal(loan.Id, result.Data!.Id);
-        _loanRepoMock.Verify(repo => repo.GetLoanByIdAsync(loan.Id), Times.Once);
+        _loanRepoMock.Verify(repo => repo.GetLoanByIdAsync(loan.Id, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     //test GetLoanByIdAsync returns not found when loan does not exist
@@ -163,10 +163,10 @@ public class LoanServiceTests
     {
         //Arrange
         var loanId = Guid.NewGuid();
-        _loanRepoMock.Setup(repo => repo.GetLoanByIdAsync(loanId)).ReturnsAsync((Loan?)null);
+        _loanRepoMock.Setup(repo => repo.GetLoanByIdAsync(loanId, It.IsAny<CancellationToken>())).ReturnsAsync((Loan?)null);
 
         //Act
-        var result = await _loanService.GetLoanByIdAsync(loanId);
+        var result = await _loanService.GetLoanByIdAsync(loanId, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -187,10 +187,10 @@ public class LoanServiceTests
             DueAt = DateTime.UtcNow.AddDays(14)
         };
 
-        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(bookId)).ReturnsAsync((Book?)null);
+        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(bookId, It.IsAny<CancellationToken>())).ReturnsAsync((Book?)null);
 
         //Act
-        var result = await _loanService.LoanBookAsync(loanCreateDto);
+        var result = await _loanService.LoanBookAsync(loanCreateDto, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -213,11 +213,11 @@ public class LoanServiceTests
             DueAt = dueAt
         };
 
-        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(book.Id)).ReturnsAsync(book);
-        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(userId)).ReturnsAsync((User?)null);
+        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(book.Id, It.IsAny<CancellationToken>())).ReturnsAsync(book);
+        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(userId, It.IsAny<CancellationToken>())).ReturnsAsync((User?)null);
 
         //Act
-        var result = await _loanService.LoanBookAsync(loanCreateDto);
+        var result = await _loanService.LoanBookAsync(loanCreateDto, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -239,11 +239,11 @@ public class LoanServiceTests
             DueAt = pastDueAt
         };
 
-        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(book.Id)).ReturnsAsync(book);
-        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(user.Id)).ReturnsAsync(user);
+        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(book.Id, It.IsAny<CancellationToken>())).ReturnsAsync(book);
+        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(user.Id, It.IsAny<CancellationToken>())).ReturnsAsync(user);
 
         //Act
-        var result = await _loanService.LoanBookAsync(loanCreateDto);
+        var result = await _loanService.LoanBookAsync(loanCreateDto, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -265,12 +265,12 @@ public class LoanServiceTests
             DueAt = dueAt
         };
 
-        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(book.Id)).ReturnsAsync(book);
-        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(user.Id)).ReturnsAsync(user);
-        _loanRepoMock.Setup(repo => repo.HasActiveLoanAsync(book.Id)).ReturnsAsync(true);
+        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(book.Id, It.IsAny<CancellationToken>())).ReturnsAsync(book);
+        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(user.Id, It.IsAny<CancellationToken>())).ReturnsAsync(user);
+        _loanRepoMock.Setup(repo => repo.HasActiveLoanAsync(book.Id, It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         //Act
-        var result = await _loanService.LoanBookAsync(loanCreateDto);
+        var result = await _loanService.LoanBookAsync(loanCreateDto, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -292,13 +292,13 @@ public class LoanServiceTests
             DueAt = dueAt
         };
 
-        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(book.Id)).ReturnsAsync(book);
-        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(user.Id)).ReturnsAsync(user);
-        _loanRepoMock.Setup(repo => repo.HasActiveLoanAsync(book.Id)).ReturnsAsync(false);
+        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(book.Id, It.IsAny<CancellationToken>())).ReturnsAsync(book);
+        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(user.Id, It.IsAny<CancellationToken>())).ReturnsAsync(user);
+        _loanRepoMock.Setup(repo => repo.HasActiveLoanAsync(book.Id, It.IsAny<CancellationToken>())).ReturnsAsync(false);
         _loanRepoMock.Setup(repo => repo.AddLoanAsync(It.IsAny<Loan>())).ThrowsAsync(new DbUpdateException());
 
         //Act
-        var result = await _loanService.LoanBookAsync(loanCreateDto);
+        var result = await _loanService.LoanBookAsync(loanCreateDto, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -319,13 +319,13 @@ public class LoanServiceTests
             DueAt = dueAt
         };
 
-        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(book.Id)).ReturnsAsync(book);
-        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(user.Id)).ReturnsAsync(user);
-        _loanRepoMock.Setup(repo => repo.HasActiveLoanAsync(book.Id)).ReturnsAsync(false);
+        _bookRepoMock.Setup(repo => repo.GetBookByIdAsync(book.Id, It.IsAny<CancellationToken>())).ReturnsAsync(book);
+        _userRepoMock.Setup(repo => repo.GetUserByIdAsync(user.Id, It.IsAny<CancellationToken>())).ReturnsAsync(user);
+        _loanRepoMock.Setup(repo => repo.HasActiveLoanAsync(book.Id, It.IsAny<CancellationToken>())).ReturnsAsync(false);
         _loanRepoMock.Setup(repo => repo.AddLoanAsync(It.IsAny<Loan>())).Returns(Task.CompletedTask);
 
         //Act
-        var result = await _loanService.LoanBookAsync(loanCreateDto);
+        var result = await _loanService.LoanBookAsync(loanCreateDto, CancellationToken.None);
 
         //Assert
         Assert.True(result.IsSuccess);
@@ -339,10 +339,10 @@ public class LoanServiceTests
     {
         //Arrange
         var loanId = Guid.NewGuid();
-        _loanRepoMock.Setup(repo => repo.GetLoanByIdAsync(loanId)).ReturnsAsync((Loan?)null);
+        _loanRepoMock.Setup(repo => repo.GetLoanByIdAsync(loanId, It.IsAny<CancellationToken>())).ReturnsAsync((Loan?)null);
 
         //Act
-        var result = await _loanService.ReturnBookAsync(loanId);
+        var result = await _loanService.ReturnBookAsync(loanId, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -357,10 +357,10 @@ public class LoanServiceTests
         var dueAt = DateTime.UtcNow.AddDays(14);
         var (_, _, loan) = CreateSampleLoan(dueAt);
         loan.ReturnBook();
-        _loanRepoMock.Setup(repo => repo.GetLoanByIdAsync(loan.Id)).ReturnsAsync(loan);
+        _loanRepoMock.Setup(repo => repo.GetLoanByIdAsync(loan.Id, It.IsAny<CancellationToken>())).ReturnsAsync(loan);
 
         //Act
-        var result = await _loanService.ReturnBookAsync(loan.Id);
+        var result = await _loanService.ReturnBookAsync(loan.Id, CancellationToken.None);
 
         //Assert
         Assert.False(result.IsSuccess);
@@ -375,10 +375,10 @@ public class LoanServiceTests
         //Arrange
         var dueAt = DateTime.UtcNow.AddDays(14);
         var (_, _, loan) = CreateSampleLoan(dueAt);
-        _loanRepoMock.Setup(repo => repo.GetLoanByIdAsync(loan.Id)).ReturnsAsync(loan);
+        _loanRepoMock.Setup(repo => repo.GetLoanByIdAsync(loan.Id, It.IsAny<CancellationToken>())).ReturnsAsync(loan);
 
         //Act
-        var result = await _loanService.ReturnBookAsync(loan.Id);
+        var result = await _loanService.ReturnBookAsync(loan.Id, CancellationToken.None);
 
         //Assert
         Assert.True(result.IsSuccess);

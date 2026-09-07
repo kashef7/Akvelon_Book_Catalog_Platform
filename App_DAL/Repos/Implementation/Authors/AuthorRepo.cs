@@ -16,19 +16,19 @@ public class AuthorRepo : IAuthorRepo
         _dbContext = dbContext;
     }
     
-    public async Task<(IReadOnlyList<Author> items, int TotalCount)> GetAllAuthorsAsync(AuthorQuery authorQuery)
+    public async Task<(IReadOnlyList<Author> items, int TotalCount)> GetAllAuthorsAsync(AuthorQuery authorQuery, CancellationToken cancellationToken)
     {
         var query = _dbContext.Authors.AsNoTracking().AsQueryable().Where(b => !b.IsDeleted).ApplyQueryFilters(authorQuery);
         
-        var totalCount = await query.CountAsync();
+        var totalCount = await query.CountAsync(cancellationToken);
         
-        IReadOnlyList<Author> result = await query.OrderBy(x => x.Id).Skip((authorQuery.PageNumber - 1) * authorQuery.PageSize).Take(authorQuery.PageSize).ToListAsync();
+        IReadOnlyList<Author> result = await query.OrderBy(x => x.Id).Skip((authorQuery.PageNumber - 1) * authorQuery.PageSize).Take(authorQuery.PageSize).ToListAsync(cancellationToken);
         return (result, totalCount);
     }
 
-    public async Task<Author?> GetAuthorByIdAsync(Guid id)
+    public async Task<Author?> GetAuthorByIdAsync(Guid id, CancellationToken cancellationToken)
     {
-        var query = await _dbContext.Authors.FirstOrDefaultAsync(a => a.Id == id && !a.IsDeleted);
+        var query = await _dbContext.Authors.FirstOrDefaultAsync(a => a.Id == id && !a.IsDeleted, cancellationToken);
         return  query;
     }
 

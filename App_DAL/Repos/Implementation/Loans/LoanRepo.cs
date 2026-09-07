@@ -14,24 +14,24 @@ public class LoanRepo : ILoanRepo
     {
         _dbContext = dbContext;
     }
-    public async Task<(IReadOnlyList<Loan> items, int totalCount)> GetAllLoansAsync(LoanQuery loanQuery)
+    public async Task<(IReadOnlyList<Loan> items, int totalCount)> GetAllLoansAsync(LoanQuery loanQuery, CancellationToken cancellationToken)
     {
         var query = _dbContext.Loans.AsQueryable().AsNoTracking()
             .ApplyQueryFilters(loanQuery)
             .Include(l => l.Book)
             .Include(l => l.User);
-        var totalCount = await query.CountAsync();
+        var totalCount = await query.CountAsync(cancellationToken);
         
-        IReadOnlyList<Loan> result = await query.OrderBy(x => x.Id).Skip((loanQuery.PageNumber - 1) * loanQuery.PageSize).Take(loanQuery.PageSize).ToListAsync();
+        IReadOnlyList<Loan> result = await query.OrderBy(x => x.Id).Skip((loanQuery.PageNumber - 1) * loanQuery.PageSize).Take(loanQuery.PageSize).ToListAsync(cancellationToken);
         return (result, totalCount);
     }
 
-    public async Task<Loan?> GetLoanByIdAsync(Guid loanId)
+    public async Task<Loan?> GetLoanByIdAsync(Guid loanId, CancellationToken cancellationToken)
     {
         var loan = await _dbContext.Loans
             .Include(l => l.Book)
             .Include(l => l.User)
-            .FirstOrDefaultAsync(l => l.Id == loanId);
+            .FirstOrDefaultAsync(l => l.Id == loanId, cancellationToken);
         return loan;
     }
 
@@ -41,14 +41,14 @@ public class LoanRepo : ILoanRepo
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task<bool> HasActiveLoanAsync(Guid bookId)
+    public async Task<bool> HasActiveLoanAsync(Guid bookId, CancellationToken cancellationToken)
     {
-        return await _dbContext.Loans.AnyAsync(l => l.BookId == bookId && l.ReturnedAt == null);
+        return await _dbContext.Loans.AnyAsync(l => l.BookId == bookId && l.ReturnedAt == null, cancellationToken);
     }
 
-    public async Task<bool> HasActiveLoanByUserAsync(Guid userId)
+    public async Task<bool> HasActiveLoanByUserAsync(Guid userId, CancellationToken cancellationToken)
     {
-        return await _dbContext.Loans.AnyAsync(l => l.UserId == userId && l.ReturnedAt == null);
+        return await _dbContext.Loans.AnyAsync(l => l.UserId == userId && l.ReturnedAt == null, cancellationToken);
     }
 
     public async Task SaveChangesAsync()

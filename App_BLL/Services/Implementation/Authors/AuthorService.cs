@@ -19,7 +19,7 @@ public class AuthorService : IAuthorService
     private readonly IMapper _mapper;
     private readonly ILogger<AuthorService> _logger;
 
-    public AuthorService(IAuthorRepo authorRepo,IBookRepo bookRepo ,IMapper mapper, ILogger<AuthorService> logger)
+    public AuthorService(IAuthorRepo authorRepo, IBookRepo bookRepo, IMapper mapper, ILogger<AuthorService> logger)
     {
         _authorRepo = authorRepo;
         _bookRepo = bookRepo;
@@ -27,11 +27,11 @@ public class AuthorService : IAuthorService
         _logger = logger;
     }
     
-    public async Task<Result<PagedResult<AuthorGetDto>>> GetAllAuthorsAsync(AuthorQueryParams query)
+    public async Task<Result<PagedResult<AuthorGetDto>>> GetAllAuthorsAsync(AuthorQueryParams query, CancellationToken cancellationToken)
     {
         var authorQuery = _mapper.Map<AuthorQuery>(query);
         
-        var (authors,TotalCount) = await _authorRepo.GetAllAuthorsAsync(authorQuery);
+        var (authors,TotalCount) = await _authorRepo.GetAllAuthorsAsync(authorQuery, cancellationToken);
         var dtos = _mapper.Map<IReadOnlyList<AuthorGetDto>>(authors);
         
         return Result<PagedResult<AuthorGetDto>>.Success(new PagedResult<AuthorGetDto>()
@@ -43,34 +43,36 @@ public class AuthorService : IAuthorService
         });
     }
 
-    public async Task<Result<AuthorGetDto>> GetAuthorAsync(Guid id)
+    public async Task<Result<AuthorGetDto>> GetAuthorAsync(Guid id, CancellationToken cancellationToken)
     {
-        var author = await _authorRepo.GetAuthorByIdAsync(id);
+        var author = await _authorRepo.GetAuthorByIdAsync(id, cancellationToken);
         if (author == null)
         {
-            _logger.LogWarning("Author {AuthorId} Not Found", id);
+            _logger.LogWarning("author {AuthorId} not found", id);
             return Result<AuthorGetDto>.Failed(ErrorType.NotFound, "Author Not Found");
         }
         return Result<AuthorGetDto>.Success(_mapper.Map<AuthorGetDto>(author));
     }
 
-    public async Task<Result<Guid>> AddAuthorAsync(AuthorCreateDto Author)
+    public async Task<Result<Guid>> AddAuthorAsync(AuthorCreateDto Author, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var newAuthor = new Author(Author.Name);
         await _authorRepo.AddAuthorAsync(newAuthor);
         return Result<Guid>.Success(newAuthor.Id);
     }
 
-    public async Task<Result> UpdateAuthorAsync(AuthorEditDto Author, Guid editedAuthorId)
+    public async Task<Result> UpdateAuthorAsync(AuthorEditDto Author, Guid editedAuthorId, CancellationToken cancellationToken)
     {
-        var editedAuthor = await _authorRepo.GetAuthorByIdAsync(editedAuthorId);
+        cancellationToken.ThrowIfCancellationRequested();
+        var editedAuthor = await _authorRepo.GetAuthorByIdAsync(editedAuthorId, cancellationToken);
         if (editedAuthor == null)
         {
-            _logger.LogWarning("Updating Author Failed, Author {AuthorId} Not Found", editedAuthorId);
+            _logger.LogWarning("updating author failed: author {AuthorId} not found", editedAuthorId);
             return Result.Failed(ErrorType.NotFound, "Author Not Found");
         } else if (editedAuthor.IsDeleted)
         {
-            _logger.LogWarning("Updating Author Failed, Author {AuthorId} is Deleted", editedAuthorId);
+            _logger.LogWarning("updating author failed: author {AuthorId} is deleted", editedAuthorId);
             return Result.Failed(ErrorType.NotFound, "Author Deleted");
         }
         editedAuthor.UpdateAuthor(Author.Name);
@@ -79,23 +81,23 @@ public class AuthorService : IAuthorService
     }
     
 
-    public async Task<Result> DeleteAuthorAsync(Guid id)
+    public async Task<Result> DeleteAuthorAsync(Guid id, CancellationToken cancellationToken)
     {
-        
-        var deletedAuthor = await _authorRepo.GetAuthorByIdAsync(id);
+        cancellationToken.ThrowIfCancellationRequested();
+        var deletedAuthor = await _authorRepo.GetAuthorByIdAsync(id, cancellationToken);
         if (deletedAuthor == null)
         {
-            _logger.LogWarning("Deleting Author Failed, Author {AuthorId} Not Found", id);
+            _logger.LogWarning("deleting author failed: author {AuthorId} not found", id);
             return Result.Failed(ErrorType.NotFound, "Author Not Found");
         } else if (deletedAuthor.IsDeleted)
         {
-            _logger.LogWarning("Deleting Author Failed, Author {AuthorId} is Deleted", id);
+            _logger.LogWarning("deleting author failed: author {AuthorId} is deleted", id);
             return Result.Failed(ErrorType.NotFound, "Author Deleted");
         }
 
-        if (await _bookRepo.HasActiveBookByAuthorAsync(id))
+        if (await _bookRepo.HasActiveBookByAuthorAsync(id, cancellationToken))
         {
-            _logger.LogWarning("Deleting Author Failed, Author {AuthorId} has active Books", id);
+            _logger.LogWarning("deleting author failed: author {AuthorId} has active books", id);
             return Result.Failed(ErrorType.Conflict, "Author Has Active Book");
         }
         deletedAuthor.DeleteAuthor();

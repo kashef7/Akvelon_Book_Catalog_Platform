@@ -1,4 +1,4 @@
-﻿using App_BLL.Common.Paging;
+using App_BLL.Common.Paging;
 using App_BLL.Common.Result;
 using App_BLL.Dtos.LoansDtos;
 using App_BLL.QueryParams.Loan;
@@ -32,10 +32,10 @@ public class LoanService : ILoanService
         _logger = logger;
     }
     
-    public async Task<Result<PagedResult<LoanGetDto>>> GetLoansAsync(LoanQueryParams query)
+    public async Task<Result<PagedResult<LoanGetDto>>> GetLoansAsync(LoanQueryParams query, CancellationToken cancellationToken)
     {
         var loanQuery = _mapper.Map<LoanQuery>(query);
-        var (items,totalCount) = await _loanRepo.GetAllLoansAsync(loanQuery);
+        var (items,totalCount) = await _loanRepo.GetAllLoansAsync(loanQuery, cancellationToken);
         
         var resultItems = _mapper.Map<IReadOnlyList<LoanGetDto>>(items);
         return Result<PagedResult<LoanGetDto>>.Success(new PagedResult<LoanGetDto>()
@@ -48,41 +48,42 @@ public class LoanService : ILoanService
 
     }
 
-    public async Task<Result<LoanGetDto>> GetLoanByIdAsync(Guid id)
+    public async Task<Result<LoanGetDto>> GetLoanByIdAsync(Guid id, CancellationToken cancellationToken)
     {
-        var  loan = await _loanRepo.GetLoanByIdAsync(id);
+        var loan = await _loanRepo.GetLoanByIdAsync(id, cancellationToken);
         if (loan == null)
         {
-            _logger.LogError("Loan with id {LoanId} not found",id);
+            _logger.LogWarning("loan {LoanId} not found", id);
             return Result<LoanGetDto>.Failed(ErrorType.NotFound,"Loan Not Found");
         }
         return Result<LoanGetDto>.Success(_mapper.Map<LoanGetDto>(loan));
     }
 
-    public async Task<Result<Guid>> LoanBookAsync(LoanCreateDto loanCreateDto)
+    public async Task<Result<Guid>> LoanBookAsync(LoanCreateDto loanCreateDto, CancellationToken cancellationToken)
     {
-        var book =  await _bookRepo.GetBookByIdAsync(loanCreateDto.BookId);
+        cancellationToken.ThrowIfCancellationRequested();
+        var book = await _bookRepo.GetBookByIdAsync(loanCreateDto.BookId, cancellationToken);
         if (book == null)
         {
-            _logger.LogError("Loaning book failed : Book with id {BookId} not found",loanCreateDto.BookId);
+            _logger.LogWarning("loaning book failed: book {BookId} not found", loanCreateDto.BookId);
             return Result<Guid>.Failed(ErrorType.NotFound,"Book Not Found");
         }
-        var user = await _userRepo.GetUserByIdAsync(loanCreateDto.UserId);
+        var user = await _userRepo.GetUserByIdAsync(loanCreateDto.UserId, cancellationToken);
         if (user == null)
         {
-            _logger.LogError("Loaning book failed : User with id {UserId} not found",loanCreateDto.UserId);
+            _logger.LogWarning("loaning book failed: user {UserId} not found", loanCreateDto.UserId);
             return Result<Guid>.Failed(ErrorType.NotFound,"User Not Found");
         }
 
         if (loanCreateDto.DueAt < DateTime.UtcNow)
         {
-            _logger.LogWarning("Loaning book failed : Due At Date {Date} Can't be in the Past",loanCreateDto.DueAt);
+            _logger.LogWarning("loaning book failed: due at date {Date} can't be in the past", loanCreateDto.DueAt);
             return  Result<Guid>.Failed(ErrorType.BadRequest,"Due At Date in the Past");
         }
 
-        if (await _loanRepo.HasActiveLoanAsync(loanCreateDto.BookId))
+        if (await _loanRepo.HasActiveLoanAsync(loanCreateDto.BookId, cancellationToken))
         {
-            _logger.LogWarning("Loaning book failed : Book {BookId} is already Loaned",loanCreateDto.BookId);
+            _logger.LogWarning("loaning book failed: book {BookId} is already loaned", loanCreateDto.BookId);
             return Result<Guid>.Failed(ErrorType.Conflict,"Book already Loaned");
         }
         var newLoan = new Loan(loanCreateDto.DueAt, book, user);
@@ -93,23 +94,24 @@ public class LoanService : ILoanService
         }
         catch (DbUpdateException e)
         {
-            _logger.LogWarning(e, "Loaning book failed : concurrent loan conflict for book {BookId}", loanCreateDto.BookId);
+            _logger.LogWarning(e, "loaning book failed: concurrent loan conflict for book {BookId}", loanCreateDto.BookId);
             return Result<Guid>.Failed(ErrorType.Conflict, "This book is no longer available.");
         }
     }
 
-    public async Task<Result> ReturnBookAsync(Guid id)
+    public async Task<Result> ReturnBookAsync(Guid id, CancellationToken cancellationToken)
     {
-        var loan = await _loanRepo.GetLoanByIdAsync(id);
+        cancellationToken.ThrowIfCancellationRequested();
+        var loan = await _loanRepo.GetLoanByIdAsync(id, cancellationToken);
         if (loan == null)
         {
-            _logger.LogError("Returning Book Failed : Loan with id {LoanId} not found",id);
+            _logger.LogWarning("returning book failed: loan {LoanId} not found", id);
             return Result.Failed(ErrorType.NotFound,"Loan Not Found");
         }
 
         if (loan.ReturnedAt != null)
         {
-            _logger.LogWarning("Returning book Failed: Book already returned");
+            _logger.LogWarning("returning book failed: book already returned");
             return Result.Failed(ErrorType.BadRequest,"Book already returned");
         }
         loan.ReturnBook();
